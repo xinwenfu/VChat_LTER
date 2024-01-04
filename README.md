@@ -160,7 +160,8 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
       * The best way to reproduce this is to use [exploit0.py](./SourceCode/exploit0.py).
 9. We can confirm that this is a SEH frame overwrite by looking at the SEH records after the overflow occurred.
 	
-	<video src="SEH-Chain.mp4" controls title="Title"></video> <!-- Need to Replace with Link (Github Upload) -->
+
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/28529e3d-62b9-4ea9-90e2-d4c98d6b3073
 
 	1. Exploit the VChat server (If it has not already been done) with [exploit0.py](./SourceCode/exploit0.py).
 	2. Open the SEH Chain records 
@@ -218,7 +219,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 7. Use a program like [exploit3.py](./SourceCode/exploit3.py) to verify that this works. 
 
-	<video src="SEH-BAD.mp4" controls title="Title"></video> <!-- Replace with Link -->
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/56abcbb0-42fc-433f-8730-5c55754df014
    
    1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -259,7 +260,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 3. Run any of the  [exploit4a.py](./SourceCode/exploit4a.py), [exploit4b.py](./SourceCode/exploit4b.py) or [exploit4c.py](./SourceCode/exploit4c.py) programs. It should be noted that additional characters are added to the payload to crash the VChat server, allowing us analyze the memory of the program at the time of the crash.
 
-	<video src="Exploit4.mp4" controls title="Title"></video> <!-- Replace with Link -->
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/50c38f38-0ff7-46eb-9f58-9fd80fcabd00
 
 4. Ensure that in Immunity Debugger's Stack viewer we are showing the ASCII dump, we can see that out byte array has been written to the stack!
 
@@ -283,7 +284,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 		* `-f`: Compare the contents of a file (You will need to modify this to match the location of this file on your computer!)
 		* `-a`: Compare the contents of a memory address 
 
-	<video src="Exploit4-Mona.mp4" controls title="Title"></video> <!-- Replace with Link -->
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/0aa8ddb2-ec19-4a56-abec-80008a490a9c
 
 	1. Get the address of the start of the array. The easiest way to do this is to pull it from the stack. We can see from the dump (and stack ASCII dump) that out character array starts 2 bytes in from the stating address. 
 
@@ -373,7 +374,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 2. Use a program like [exploit5.py](./SourceCode/exploit5.py) to verify that this works. 
 
-	 <video src="SEH-GOOD.mp4" controls title="Title"></video><!-- Replace with Link -->
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/9445880b-f509-4e3c-9b2a-3329cf40f6bd
    
    1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -411,7 +412,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	2. Now we can check if this exploit works and preserves the SEH chain; We do this by setting the breakpoint and running the [exploit6.py](./SourceCode/exploit6.py) program as we did for [exploit5.py](./SourceCode/exploit5.py) in the second step of the [SEH Handler](#seh-handler) section.
 
-	<video src="SEH-SHORT.mp4" controls title="Title"></video><!-- Replace with Link -->
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/6a5b6fa3-0a6a-4a59-9b39-e860f33072dc
 
 #### Long Jump and Encoding
 1. Now, we have jumped onto the part of hte buffer that contains out `C`s, and this only has 41 bytes of space available, in the [GMON_SEH](https://github.com/DaintyJet/VChat_GMON_SEH) exploit we preformed a long jump as shown below:
@@ -528,7 +529,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	4. The primary focus of this will be manually encoding the long jump instruction, but an example using the [`x86/shikata_ga_nai`](https://www.infosecmatter.com/metasploit-module-library/?mm=encoder/x86/shikata_ga_nai) output is included in [exploit7a.py](./SourceCode/exploit7a.py); we can see there are a few issues!
 
-		<video src="shikata_ga_nai.mp4" controls title="Title"></video> <!-- Replace with Link -->
+		https://github.com/DaintyJet/VChat_LTER/assets/60448620/7bcab6a2-4b9a-4f8d-99bb-676b9a7855d4
 		
 		* Below is the encoded shellcode once it has been injected 
 
@@ -536,7 +537,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 4. Now we can go about manually encoding the short jump! This is so we can get the space to use a pre-made encoder to create our long jump!
 	
-	<video src="Assemble.mp4" controls title="Title"></video> <!-- Replace with Link -->
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/d75ea194-1beb-4e5d-b9a0-3addc3748fe0
 
 	1. First we want ot adjust the `ESP` register's value so in the course of our exploit we do not overwrite our own shellcode. This can be done with the following series of instructions.
 	```
@@ -577,7 +578,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	2. We can modify the exploit program to reflect [exploit7b.py](./SourceCode/exploit7b.py) and test the program as we have done previously.
 
-		<video src="Exploit7.mp4" controls title="Title"></video><!-- Replace with Link -->
+		https://github.com/DaintyJet/VChat_LTER/assets/60448620/898f0366-649e-4b49-88bc-3a613e69380f
 
 		1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -593,8 +594,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	3. We will now add instructions to create a zeroed register value
 
-		<video src="Exploit8-Create.mp4" controls title="Title"></video><!-- Replace with Link -->
-
+		https://github.com/DaintyJet/VChat_LTER/assets/60448620/20beb107-c4bb-45ec-a2d1-9d5341d6fa04
 
 		1. We will not be using the traditional `XOR EAX,EAX` instruction as the use of a register for a source leads to a bad char as we use `C0` to identify `EAX`.
 
@@ -644,7 +644,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 		
 		4. We can modify the exploit program to reflect [exploit8.py](./SourceCode/exploit8.py) and test the program as we have done previously.
 
-			<video src="Exploit8.mp4" controls title="Title" ></video> <!-- Replace with Link -->
+			https://github.com/DaintyJet/VChat_LTER/assets/60448620/e49eb041-2a0c-42b8-9346-4e9718ff7dae
 
 			1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -660,7 +660,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	4. Now we will add instructions to create the short 127 byte jump in the EAX register we have zeroed out and then push it onto the stack (Which we are executing on!). This is done since it is easier to producer 2-byte instruction through addition as with the short jump rather than a 5-byte long jump.
 
-		<video src="Exploit9-Create.mp4" controls title="Title"></video><!-- Replace with Link -->
+		https://github.com/DaintyJet/VChat_LTER/assets/60448620/88121655-dcd7-41bb-9054-bb57a135722b
 
 		1. At first thought it may seem like we can use two ADD instructions on the lower 16 bits of the register, however when we generate the assembly for this we get instructions that contain bad characters! Again we have a register identifier C0!
 			```
@@ -699,7 +699,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 		5. We can modify the exploit program to reflect [exploit9.py](./SourceCode/exploit9.py) and test the program as we have done previously.
 
-			<video src="Exploit9.mp4" controls title="Title" ></video> <!-- Replace with Link -->
+			https://github.com/DaintyJet/VChat_LTER/assets/60448620/3f147346-e329-45a7-9913-0cc559681e13
 
 			1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -744,7 +744,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 		* `b'A' * (79 - 6)`: We place additional A's so the short conditional jumps are placed where the SEH handler jumps to.
 	5. We can modify the exploit program to reflect [exploit9.py](./SourceCode/exploit9.py) and test the program as we have done previously.
 
-		<video src="Exploit10.mp4" controls title="Title" ></video> <!-- Replace with Link -->
+		https://github.com/DaintyJet/VChat_LTER/assets/60448620/d14cb21b-3068-4f66-ab22-53cd62c0e7c0
 
 		1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -789,7 +789,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 	6. Add the Encoded Long Jump shellcode to the exploit as shown in [exploit11.py](./SourceCode/exploit11.py), and test it!
 		Working
 
-		<video src="Exploit11.py.mp4" controls title="Title"></video> <!-- Replace with Link -->
+		https://github.com/DaintyJet/VChat_LTER/assets/60448620/47b5df9a-6c07-4cd0-9314-42cb6e135360
 
 		1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -813,7 +813,7 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 
 1. As we have done before we need to realign the stack pointer stored in the `ESP` register. This is because the encoder we will later will need to know where in memeory it is located. The option will require a register pointing to the start of our encoded shellcode, we do this as without this option the exploit contains non-alphanumeric characters.    
 
-	<video src="Exploit12a-MSF-Create.mp4" controls title="Title"></video>
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/239f12cd-243a-4b50-9cdb-47980585e10d
 	
 	1. We can get an idea of what operation, and the constant we should use by looking at the `ESP` value, and where we jump to on the stack.
 
@@ -864,7 +864,8 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 
 	4. Edit your exploit to reflect [exploit12a-MSF.py](./SourceCode/exploit12a-MSF.py), and test to insure it works!
 
-		<video src="Exploit12a-MSF.mp4" controls title="Title"></video> <!-- Replace with Link -->
+		https://github.com/DaintyJet/VChat_LTER/assets/60448620/935dce37-47b6-4712-afe6-af977a90faea
+
 
 		1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -880,7 +881,9 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 
 2. Now we need to generate the encoded shellcode we will inject into the buffer, as stated before we will be using the [msfvenom](https://docs.metasploit.com/docs/using-metasploit/basics/how-to-use-msfvenom.html) program. 
 
-	<video src="MSF-Exploit-Create.mp4" controls title="Title"></video> <!-- Replace with Link -->
+
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/893c3b13-d436-4827-afb3-4802ea867a3e
+
 
 	1. We can first try generating a payload as we have done before (without an Encoder)
 
@@ -940,7 +943,8 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 		5. You can exit the *msfconsole* using the keyword `exit` 
 3. Now that we have the shellcode, we can insert it into the exploit as is show in in [exploit12b-MSF.py](./SourceCode/exploit12b-MSF.py)
 
-	<video src="Exploit12b-MSF.mp4" controls title="Title"></video>
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/d6b916f2-cc82-47fb-aabd-e5119b1c7a69
+
 
 	1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -970,7 +974,7 @@ We will preform a similar exploit to one done for the [KSTET_Multi](https://gith
 
 1. As we have done before we need to realign the stack pointer stored in the `ESP` register, since we have jumped to the start of the buffer there are a few thousand `A`s between us and the top of the stack. Additionally if we do not move the stack pointer as the last instruction used by the decoder in the shellcode is `PUSH EAX`, the second stage shellcode is written to the stack following the `JMP <Head>` so we would never reach it!  
 
-	<video src="Exploit12a-Create.mp4" controls title="Title"></video> <!-- Replace with Link -->
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/544540f9-6d4d-4262-b099-d987a5b86625
 	
 	1. We can get an idea of what operation, and the constant we should use by looking at the `ESP` value, and where we jump to on the stack.
 
@@ -1001,8 +1005,8 @@ We will preform a similar exploit to one done for the [KSTET_Multi](https://gith
 		POP ESP            ; Pop the adjusted ESP value into the ESP register
 		``` 
 	3. Edit your exploit to reflect [exploit12a-MULT.py](./SourceCode/exploit12a-MULT.py), and test to insure it works!
-
-		<video src="Exploit12a.mp4" controls title="Title"></video> <!-- Replace with Link -->
+ 
+		https://github.com/DaintyJet/VChat_LTER/assets/60448620/507e8fe0-f90a-4ae2-80cb-7fe00fc86efe
 
 		1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
@@ -1046,7 +1050,7 @@ We will preform a similar exploit to one done for the [KSTET_Multi](https://gith
 
 3. Now we need to assemble the assembly into machine code and then extract the machine instructions so we can encode them.
 
-	<video src="Exploit12b-Create.mp4" controls title="Title">
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/5535983c-3398-4f38-b8e4-b440e4104aab
 
 	1. Ensure nasm is installed, if not you will need to [install it](https://nasm.us/) and add it to the path.
 
@@ -1088,7 +1092,7 @@ We will preform a similar exploit to one done for the [KSTET_Multi](https://gith
 	
 	5. Modify your exploit to reflect [exploit12b-MULT.py](./SourceCode/exploit12b-MULT.py), then test it!
 
-		<video src="Exploit12b.mp4" controls title=""></video>
+		https://github.com/DaintyJet/VChat_LTER/assets/60448620/ed4fc693-7510-409b-beb0-83b3c6123ed4
 
 		1. Click on the black button highlighted below, enter in the address we decided in the previous step
 
