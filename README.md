@@ -1237,7 +1237,11 @@ The following graphs present how ESP changes in my case (from 0x0101EC2C to 0x01
 ## References
 
 [1] https://x3tb3t.github.io/2018/03/29/mona/
+
 [2] https://crawl3r.github.io/2020-02-06/manuel_alphanumeric_shellcode_encoder
+
 [3] https://riptutorial.com/x86/example/20470/conditional-jumps
+
 [4] https://web.archive.org/web/20190218144432/https://vellosec.net/2018/08/carving-shellcode-using-restrictive-character-sets/ 
+
 [5] https://www.ibm.com/support/pages/just-faqs-about-little-endian
