@@ -1,4 +1,4 @@
-# VChat Exploiting LTER: Overcoming Character Restrictions
+# VChat LTER Exploit: Character Restrictions
 
 *Notice*: The following exploit, and its procedures are based on the original [Blog](https://fluidattacks.com/blog/vulnserver-lter-seh/). When using Windows 10 the Manual encoding section required modification.
 ___
