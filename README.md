@@ -9,7 +9,7 @@ Unlike in previous exploits the main hurdle will not be space limitations on the
 
 **Note**: The final exploitation is not working for unknown reasons at this time. All other steps work as needed.
 
-
+**Notice**: Please setup the Windows and Linux systems as described in [SystemSetup](./SystemSetup/README.md)!
 ## Exploitation
 ### PreExploitation
 1. **Windows**: Setup Vchat
