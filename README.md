@@ -9,7 +9,7 @@ Unlike in previous exploits the main hurdle will not be space limitations on the
 
 **Note**: The final exploitation is not working for unknown reasons at this time. All other steps work as needed.
 
-
+**Notice**: Please setup the Windows and Linux systems as described in [SystemSetup](./SystemSetup/README.md)!
 ## Exploitation
 ### PreExploitation
 1. **Windows**: Setup Vchat
@@ -253,7 +253,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 		<img src="Images/I19.png" width=600>
 
-		* For ease of access you can open a file `bytearray.txt` in the folder `C:\Users\Malware Analysis\AppData\Local\VirtualStore\Program Files (x86)\Immunity Inc\Immunity Debugger\bytearray.txt` 
+		* For ease of access you can open a file `bytearray.txt` in the folder `C:\Users\Malware Analysis\AppData\Local\VirtualStore\Program Files (x86)\Immunity Inc\Immunity Debugger\bytearray.txt`. You can also use the command `!mona config -set workingfolder c:\logs\E6` to set the folder our output will be stored in.
 		* Code using this method is provided in [exploit4a.py](./SourceCode/exploit4a.py).
 	2. The second method is inline generation of characters in the exploit script. There are many ways you can do this generation but two examples are provided in [exploit4b.py](./SourceCode/exploit4b.py) and [exploit4c.py](./SourceCode/exploit4c.py) from the original blog which uses a python oneliner.
 
