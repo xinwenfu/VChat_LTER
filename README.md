@@ -22,12 +22,14 @@ This section covers the compilation process and use of the VChat Server. We incl
 
 ### Visual Studio
 <details>
+	
 1. Open the [Visual Studio project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/DLL/Essfun) for the *essfunc* DLL.
 2. Build the project; as this contains inline assembly, the target DLL file must be compiled as a x86 DLL (32-bits).
 3. Copy the Resulting DLL from the *Debug* folder in the [Essfunc Project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/DLL/Essfun/Debug) into the *Debug* folder in the [VChat Project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/EXE/VChat/Debug).
 
 4. Open the [Visual Studio project](https://github.com/DaintyJet/vchat-fork/tree/main/Server/Visual%20Studio%20Projects/EXE/VChat) for the *VChat* EXE.
 5. Build the Project, our executable will be in the *Debug* folder. You can then launch the executable!
+
 </details>
 
 ### Mingw/GCC
