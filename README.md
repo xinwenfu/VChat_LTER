@@ -216,7 +216,7 @@ SPIKE is a C based fuzzing tool commonly used by professionals, it is available 
 		<img src="Images/I8b.png" width=600>
 
 #### Further Analysis
-1. Generate a Cyclic Pattern. We do this so we can tell *where exactly* the SEH record is located on the stack. We can use the *Metasploit* script [pattern_create.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_create.rb) to generate this string. By analyzing the values stored in the register which will be a subset of the generated string after a crash, we can tell where in memory the SEH record is stored.
+1. Generate a Cyclic Pattern. We do this so we can tell *where exactly* the SEH record is located on the stack. We can use the *Metasploit* script [pattern_create.rb](https://github.com/rapid7/metasploit-framework/blob/master/tools/exploit/pattern_create.rb) to generate this string. By analyzing the values stored in the registerc(?) which will be a subset of the generated string after a crash, we can tell where in memory the SEH record is stored.
 	```
 	/usr/share/metasploit-framework/tools/exploit/pattern_create.rb -l 5000
 	```
