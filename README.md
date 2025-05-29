@@ -33,8 +33,7 @@ This section covers the compilation process and use of the VChat Server. We incl
 </details>
 
 ### Mingw/GCC
-<details>
-	
+<details>	
 
 Compile VChat and its dependencies if they have not already been compiled. This is done with mingw.
 
@@ -112,7 +111,10 @@ We want to understand the VChat program and how it works in order to exploit it 
 This phase of exploitation involves launching the target application or binary and examining its behavior based on the input we provide. We can do this using automated fuzzing tools or manually generated input.
 
 The actions the *LTER* command takes on the given input are slightly different compared to those of the other functions that in the VChat/Vulnserver application. This means our Dynamic Analysis phase will be slightly longer! However the end goal is still to produce an exploit string in the format of `padding-bytes|address-to-overwrite-return-address|shell-code`, where | means concatenation.
+
 #### Launch VChat
+<details>	
+
 1. Open Immunity Debugger.
 
 	<img src="Images/I1.png" width=800>
@@ -146,6 +148,8 @@ The actions the *LTER* command takes on the given input are slightly different c
 3. Ensure that the execution in not paused, click the red arrow (Top Left).
 
 	<img src="Images/I3-4.png" width=800>
+
+</details>	
 
 #### Fuzzing
 SPIKE is a C based fuzzing tool commonly used by professionals, it is available in [kali linux](https://www.kali.org/tools/spike/). Here is [a tutorial](http://thegreycorner.com/2010/12/25/introduction-to-fuzzing-using-spike-to.html) of the SPIKE tool by vulnserver's author [Stephen Bradshaw](http://thegreycorner.com/) in addition to [other resources](https://samsclass.info/127/proj/p18-spike.htm) for guidance. The source code is still available on [GitHub](https://github.com/guilhermeferreira/spikepp/) and still maintained on [GitLab](https://gitlab.com/kalilinux/packages/spike).
