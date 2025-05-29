@@ -69,6 +69,8 @@ The following sections cover the process that should (Or may) be followed when p
 > [!IMPORTANT]
 > The offsets and addresses shown in the following screenshots may differ from those used in the python and ruby code in this repository. This is because the offsets change slightly between the Windows 10 version of VChat compiled with GCC and the Windows 11 version compiled with the Visual Studio compiler.
 ### Information Collecting
+<details>
+	
 We want to understand the VChat program and how it works in order to exploit it effectively. Before diving into the specifics of how VChat behaves, the most important information for us is the IP address of the Windows VM that runs VChat and the port number that VChat runs on.
 
 1. **Windows** Launch the VChat application.
@@ -104,6 +106,8 @@ We want to understand the VChat program and how it works in order to exploit it 
 	* Now, trying every possible combinations of strings would get quite tiresome, so we can use the technique of *fuzzing* to automate this process as discussed later in the exploitation section.
 	* In this case we will do some fuzzing to keep the exploit sections relatively consistent, but as you can see we know crashing this command will not take much!
 
+</details>
+	
 ### Dynamic Analysis
 This phase of exploitation involves launching the target application or binary and examining its behavior based on the input we provide. We can do this using automated fuzzing tools or manually generated input.
 
