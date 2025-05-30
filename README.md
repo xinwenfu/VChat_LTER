@@ -487,7 +487,7 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 |------------------------------------------------------------|
 |    FIRST_STAGE                                             |
 |------------------------------------------------------------|
-|    b'\x5c'                                                 | POP ESP
+|    b'\x5c'                                                 | # POP ESP
 |    b'\x50'                                                 | # PUSH EAX
 |    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
 |    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
