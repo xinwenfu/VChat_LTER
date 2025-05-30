@@ -152,41 +152,33 @@ The actions the *LTER* command takes on the given input are slightly different c
 </details>	
 
 #### Fuzzing
-SPIKE is a C based fuzzing tool commonly used by professionals, it is available in [kali linux](https://www.kali.org/tools/spike/). Here is [a tutorial](http://thegreycorner.com/2010/12/25/introduction-to-fuzzing-using-spike-to.html) of the SPIKE tool by vulnserver's author [Stephen Bradshaw](http://thegreycorner.com/) in addition to [other resources](https://samsclass.info/127/proj/p18-spike.htm) for guidance. The source code is still available on [GitHub](https://github.com/guilhermeferreira/spikepp/) and still maintained on [GitLab](https://gitlab.com/kalilinux/packages/spike).
+We use [boofuzz](https://boofuzz.readthedocs.io/en/stable/index.html) for fuzzing, in which methodologically generated random data is injected into the target. It is hoped that the random data will cause the target to perform erratically, for example, crash. If that happens, bugs are found in the target.
 
 1. Open a terminal on the **Kali Linux Machine**.
-2. Create a file ```LTER.spk``` file with your favorite text editor. We will use a SPIKE script and interpreter rather than writing our own C based fuzzer. During this walkthrough, we will be using the [mousepad](https://github.com/codebrainz/mousepad) text editor, though any editor may be used.
-	```sh
-	$ mousepad LTER.spk
-	```
-	* If you do not have a GUI environment, an editor like [nano](https://www.nano-editor.org/), [vim](https://www.vim.org/) or [emacs](https://www.gnu.org/software/emacs/) could be used.
-3. Define the FUZZER parameters, we are using [SPIKE](https://www.kali.org/tools/spike/) with the ```generic_send_tcp``` interpreter for TCP based fuzzing.
 
-	```
-	s_readline();
-	s_string("LTER ");
-	s_string_variable("*");
-	```
-    * ```s_readline();```: Return the line from the server.
-    * ```s_string("LTER ");```: Specifies that we start each message with the *String* LTER.
-    * ```s_string_variable("*");```: This specifies a String that we will mutate over. We can set it to * to say "any," as we do in our case.
-4. Use the Spike Fuzzer.
-	```
-	$ generic_send_tcp <VChat-IP> <Port> <SPIKE-Script> <SKIPVAR> <SKIPSTR>
+Go into the boofuzz folder
+```
+┌──(kali㉿kali)-[~]
+└─$ cd ~/boofuzz
+```
 
-	# Example
-	# generic_send_tcp 10.0.2.13 9999 LTER.spk 0 0
-	```
-    * ```<VChat-IP>```: Replace this with the IP of the target machine.
-	* ```<Port>```: Replace this with the target port.
-	* ```<SPIKE-Script>```: Script to run through the interpreter.
-	* ```<SKIPVAR>```: Skip to the n'th **s_string_variable**, 0 -> (S - 1) where S is the number of variable blocks.
-	* ```<SKIPSTR>```: Skip to the n'th element in the array that is **s_string_variable**, they internally are an array of strings used to fuzz the target.
-5. Observe the results on VChat's terminal output.
+Start a boofuzz virtual environment so that it does not interfere with other Pyhting settings.
+```                                                                                                                                          
+┌──(kali㉿kali)-[~/boofuzz]
+└─$ source env/bin/activate
+                                                                                                                                          
+┌──(env)─(kali㉿kali)-[~/boofuzz]
+└─$ 
+```
 
-	<img src="Images/I4.png" width=600>
+2. Run the fuzzing script [boofuzz-vchat-LTER.py](SourceCode/boofuzz-vchat-LTER.py)
 
-	* Notice that VChat appears to have crashed after our third message. This is a message that is over 5000 characters long. So we can create a program like [exploit0.py](./SourceCode/exploit0.py) to send 5000 `A`s to repeatedly crash VChat.
+```
+python boofuzz-vchat-LTER.py
+```
+*boofuzz-vchat-LTER.py* works as follows: builds a connection to the target, creates a message template with some fixed fields and a fuzzable field that will change, and then begins to inject the random data case by case into the target. One test case refers to one random message injected into the target.
+
+3. Eventually vchat will crash. Immunity Debugger gives the string that crashes vchat. Find the string in the fuzzing log file. I do feel it is a bit hard to identify which string actually crashes VChat. It appears even after VChat crashes, its port is still open, maybe because it takes time for the OS to clean the crashed VChat.
 
 6. We can see at the bottom of *Immunity Debugger* that VChat crashed due to a memory access violation. This means we may have overwritten the return address stored on the stack, leading to the EIP being loaded with an invalid address or overwrote a SEH frame. This error could have also been caused if we overwrote a local pointer that is then dereferenced... However, we know from previous exploits on VChat that this is unlikely.
 
