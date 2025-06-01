@@ -1176,7 +1176,7 @@ With the second stage prepped and exposed on our network, we can perform the fin
 5. Run the [exploit13a-DLL.py](./SourceCode/exploit13-DLL.py) program, and open the terminal you have the netcat listener on!
 
 
-**Note**
+**Note**:
 The diagram below shows the stack when the malcious string is injected into vchat.exe. The SEH gadget runs the two jump short
 instructions and jumps above to the instructions that create a jump instruction. This jump instruction is to jump back and run JUMP_ENCODE, which jumps to the start of our buffer, where the first stage code FIRST_STAGE is located. FIRST_STAGE will load the remote malicious dll and performs the attack.
 
