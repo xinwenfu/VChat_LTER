@@ -185,6 +185,8 @@ python boofuzz-vchat-LTER.py
 	<img src="Images/I4d.png" width=600>
 
 7. We can look at the comparison of the Register values before and after the fuzzing in Immunity Debugger. Here, we can see the EIP has **not been overwritten** with a series of `A`s (`0x41`). This means we likely overwrote a SEH frame on the stack!
+
+<details>
 	* Before:
 
 		<img src="Images/I7.png" width=600>
@@ -194,7 +196,10 @@ python boofuzz-vchat-LTER.py
 		<img src="Images/I8.png" width=600>
 
       * The best way to reproduce this is to use [exploit0.py](./SourceCode/exploit0.py).
-8. We can confirm that this is a SEH frame overwrite by looking at the SEH records after the overflow occurred.
+
+</details>
+
+9. We can confirm that this is a SEH frame overwrite by looking at the SEH records after the overflow occurred.
 
 	https://github.com/DaintyJet/VChat_LTER/assets/60448620/28529e3d-62b9-4ea9-90e2-d4c98d6b3073
 
