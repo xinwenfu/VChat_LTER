@@ -186,7 +186,8 @@ python boofuzz-vchat-LTER.py
 
 7. We can look at the comparison of the Register values before and after the fuzzing in Immunity Debugger. Here, we can see the EIP has **not been overwritten** with a series of `A`s (`0x41`). This means we likely overwrote a SEH frame on the stack!
 
-<details>
+ <details>
+	 
 	* Before:
 
 		<img src="Images/I7.png" width=600>
