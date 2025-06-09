@@ -1233,7 +1233,7 @@ The hard part to understand is we use instructions to create the jump instructio
 |------------------------------------------------------------|
 ```
 
-**Note**: Not sure why the attack crashes the vchat server. Therefore, we restart the vchat server once it crashes. The attack repeats the attack until it succeeds.
+**Note**: Not sure why the attack crashes the vchat server. Therefore, we restart the vchat server once it crashes. The attack repeats until it succeeds.
 
 #### Multi-Stage
 > [!NOTE]
